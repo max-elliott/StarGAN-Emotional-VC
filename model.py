@@ -3,250 +3,167 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import copy
+import audio_utils
+import yaml
+from classifiers import *
+from average_weighted_attention import Average_Weighted_Attention
 
-class StarGAN_emo_VC(nn.Module):
-    
 
-class Average_Weighted_Attention(nn.Module):
-    def __init__(self, vector_size):
-        super(Average_Weighted_Attention, self).__init__()
-        self.vector_size = vector_size
-        self.weights = nn.Parameter(torch.randn(self.vector_size,1, requires_grad = True)/np.sqrt(self.vector_size),
-                                    requires_grad = True)
-
-    def reset_parameters(self):
-        init.kaiming_uniform_(self.weight, a=math.sqrt(5))
-
-    def forward(self, x):
+class StarGAN_emo_VC1(object):
+    '''
+    The proposed model of this project.
+    '''
+    def __init__(self, config):
         '''
-        x.size() = (Batch, max_seq_len, n_feats)
+        Need config for input_size, hidden_size, num_layers, num_classes, bi = False
         '''
+        super(StarGAN_emo_VC1, self).__init__()
+        self.config = config
+        # Need completing
+        print("Test")
+        self.build_model(self.config)
 
-        original_sizes = x.size()
-        x = x.contiguous().view(original_sizes[0]*original_sizes[1],-1)
-        # size = (B*max_seq, n_feats)
 
-        x_dot_w = x.mm(self.weights)
+    def set_train_mode(self):
+        self.G.train()
+        self.D.train()
+        self.emo_cls.train()
+        self.speaker_cls.train()
+        # self.dimension_cls.train()
 
-        # data_dot_w = (B*max_seq, n_feats)
-        x_dot_w = x_dot_w.view(original_sizes[0],original_sizes[1])
+    def set_eval_mode(self):
+        self.G.eval()
+        self.D.eval()
+        self.emo_cls.eval()
+        self.speaker_cls.eval()
+        # self.dimension_cls.eval()
 
-        softmax = nn.Softmax(dim = 1)
-        alphas = softmax(x_dot_w)
-        alphas = alphas.view(-1,1)
+    def to_device(self, device = torch.device('cuda')):
+        if torch.cuda.is_available():
+            self.G.to(device = device)
+            self.D.to(device = device)
+            self.emo_cls.to(device = device)
+            self.speaker_cls.to(device = device)
+            # self.dimension_cls.to(device = device)
+        else:
+            print("Device not available")
 
-        x = x.mul(alphas)
-        x = x.view(original_sizes)
-        x = torch.sum(x, dim = 1)
+    def build_model(self, config):
+
+        self.num_input_feats = config['model']['main_model']['num_feats']
+        self.hidden_size = 128
+        self.num_layers = 2
+        self.num_emotions = 4
+        self.num_speakers = 10
+        self.bi = True
+
+        print("Building components")
+
+        self.G = Generator()
+        self.D = Discriminator()
+        self.emo_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
+                                          self.num_layers, self.num_emotions,
+                                          bi = self.bi)
+        self.speaker_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
+                                          self.num_layers, self.num_speakers,
+                                          bi = self.bi)
+        # self.dimension_cls = Dimension_Classifier(self.num_input_feats, self.hidden_size,
+        #                                   self.num_layers, bi = self.bi)
+
+        print("Building optimizers")
+
+        con_opt = config['model']['optimizer']
+        self.g_optimizer = torch.optim.Adam(self.G.parameters(), con_opt['g_lr'], [con_opt['beta1'], con_opt['beta2']])
+        self.d_optimizer = torch.optim.Adam(self.D.parameters(), con_opt['d_lr'], [con_opt['beta1'], con_opt['beta2']])
+        self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
+        self.speaker_cls_optimizer = torch.optim.Adam(self.speaker_cls.parameters(), con_opt['speaker_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
+        # self.dim_cls_optimizer = torch.optim.Adam(self.dim_cls.parameters(), config.dim_cls_lr,[config.beta1, config.beta2])
+
+        print("Network parameter list:")
+
+        self.print_network(self.G, 'G')
+        self.print_network(self.D, 'D')
+        self.print_network(self.emo_cls, 'Emotion Classifier')
+        self.print_network(self.speaker_cls, 'Speaker Classifier')
+        # self.print_network(self.dim_cls, 'Dimensional Emotions Classifier')
+
+        self.to_device()
+
+    def print_network(self, model, name):
+        """Print out the network information."""
+        num_params = 0
+        for p in model.parameters():
+            num_params += p.numel()
+        print(model)
+        print(name)
+        print("The number of parameters: {}".format(num_params))
+
+    def reset_grad(self):
+        """Reset the gradient buffers."""
+        self.g_optimizer.zero_grad()
+        self.d_optimizer.zero_grad()
+        self.emo_cls_optimizer.zero_grad()
+        self.speaker_cls_optimizer.zero_grad()
+        # self.dim_cls_optimizer.zero_grad()
+
+
+    # def foward(self, x, c_new, c_original):
+    #     '''
+    #     Can't actually do this properly in a class, move to solver.
+    #     Needs to:
+    #         - update D more often than G (GAN theory)
+    #         - split x_g_mels into segments for classification (unless it can be
+    #           done with variable sequence lengths)
+    #     '''
+    #     # pass through generator to get x' = x_g
+    #     x_g = self.G(x,c_new)
+    #
+    #     # Convert x to mel, NEED A BATCH VERSION
+    #     x_g_mels = audio_utils.spectrogram2melspectrogram(x_g)
+    #
+    #     # for reconstruction to make x_rec
+    #     x_rec = self.G(x_g_mels, c_original)
+    #
+    #     # get D_real, D_emo, D_spk, D_dim
+    #     y_real = self.D(x_g_mels, c_new)
+    #     y_emo = self.emo_cls(x_g_mels)
+    #     y_spk = self.speaker_cls(x_g_mels)
+    #     y_dim = self.dimension_cls(x_g_mels)
+    #
+    #     return x_rec, y_real, y_emo, y_spk, y_dim
+
+class Generator(nn.Module):
+
+    def __init__(self):
+        super(Generator, self).__init__()
+
+        #Create layers
+        self.temp_layer = nn.Linear(10,10)
+
+    def forward(self, x, c):
+
+        x = self.temp_layer(x)
 
         return x
 
-class Emotion_Classifier(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes, bi = False):
-        '''
-        NOTE: input size must be directly divisible by 4
-        Is also used for speaker classifier
-        '''
-        super(Emotion_Classifier, self).__init__()
-        self.hidden_size = hidden_size
-        self.input_size = input_size # == n_mels
-        self.num_layers = num_layers
-        self.num_classes = num_classes
-        self.num_outchannels = 32
-        self.m_factor = 2 if bi else 1
+class Discriminator(nn.Module):
 
-        kernel = 7
-        padding = int((kernel-1)/2)
-        self.conv1 = nn.Conv2d(1, 16, kernel, padding = padding)
-        self.maxpool1 = nn.MaxPool2d(2, stride = 2)
-        self.conv2 = nn.Conv2d(16, 24, kernel, padding = padding)
-        self.maxpool2 = nn.MaxPool2d(2, stride = 2)
-        self.conv3 = nn.Conv2d(24, self.num_outchannels, kernel, padding = padding)
-        self.maxpool3 = nn.MaxPool2d(2, stride = 2)
+    def __init__(self):
+        super(Discriminator, self).__init__()
 
-        self.lstm1 = nn.LSTM(input_size = self.input_size*self.num_outchannels//8,
-                           hidden_size = self.hidden_size, num_layers = self.num_layers,
-                           batch_first = True, bidirectional = bi)
-        self.att = Average_Weighted_Attention(self.hidden_size*self.m_factor)
+        #Create layers
+        self.temp_layer = nn.Linear(10,10)
 
-        self.fc = nn.Linear(self.m_factor*hidden_size, 64)
-        self.drop = nn.Dropout(p = 0.2)
-        self.out = nn.Linear(64,self.num_classes)
+    def forward(self, x, c):
 
-    def forward(self, x):
-        '''
-        x[0] is size (batch_size, max_seq_length, feature_dim)
-        x[1] is size (batch_size, 1), contains seq_lens
-        batch is in descending seq_len order
-        '''
-        x_data = x[0]
-        x_lens = x[1]
+        x = self.temp_layer(x)
 
-        batch_size = x_data.size(0)
-        no_features = x_data.size(2)
+        return x
 
-        #Convolutional layers
-        x_data = x_data.unsqueeze(1)
-        x_data = self.maxpool1(F.relu(self.conv1(x_data)))
-        x_data = self.maxpool2(F.relu(self.conv2(x_data)))
-        x_data = self.maxpool3(F.relu(self.conv3(x_data)))
-        x_lens = x_lens//8    # seq_len have got ~4 times shorted
-        # x = (B, channels, max_l//4, n_mels//4)
+if __name__ == '__main__':
 
-        #Recurrent layers
+    config = yaml.load(open('./config.yaml', 'r'))
 
-        x_data = x_data.permute(0,2,1,3)
-        x_data = x_data.contiguous().view(batch_size, -1, self.num_outchannels*no_features//8)
-        #Now x = (B, max_l//4, channels*n_mels//4)
+    print("Made config.")
 
-
-        x_data = nn.utils.rnn.pack_padded_sequence(x_data, x_lens,
-                                                   batch_first=True,
-                                                   enforce_sorted=True)
-
-        h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
-
-        c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
-
-        #LSTM returns: (seq_len, batch, num_directions * hidden_size),
-        #              ((num_layers * num_directions, batch, hidden_size), c_n)
-        x_data,_ = self.lstm1(x_data, (h0,c0))
-
-        x_data, x_lens = torch.nn.utils.rnn.pad_packed_sequence(x_data, batch_first=True)
-
-        x_data = self.att(x_data)
-
-        # Alternate non-attention based method: take the final hidden layer for each sequence
-        # x_data = torch.stack([row[x_lens[i]-1] for (i,row) in enumerate(x_data)]) #(B, m_factor*hidden_size)
-
-        x_data = self.drop(F.relu(self.fc(x_data)))
-
-        x_data = self.out(x_data)
-
-        return x_data
-
-class Dimension_Classifier(nn.Module):
-    '''
-    Model for multi-task classification of valence and arousal.
-    Uses three conv2d->maxpooling layers, into two separate sequential modelling
-    networks for prediction of valence and arousal.
-    '''
-    def __init__(self, input_size, hidden_size, num_layers, bi = False):
-        '''
-        NOTE: input size must be directly divisible by 4
-        '''
-        super(Dimension_Classifier, self).__init__()
-        self.hidden_size = hidden_size
-        self.input_size = input_size # == n_mels
-        self.num_layers = num_layers
-        self.num_outchannels = 32
-        self.m_factor = 2 if bi else 1
-
-        kernel = 7
-        padding = int((kernel-1)/2)
-        self.conv1 = nn.Conv2d(1, 16, kernel, padding = padding)
-        self.maxpool1 = nn.MaxPool2d(2, stride = 2)
-        self.conv2 = nn.Conv2d(16, 24, kernel, padding = padding)
-        self.maxpool2 = nn.MaxPool2d(2, stride = 2)
-        self.conv3 = nn.Conv2d(24, self.num_outchannels, kernel, padding = padding)
-        self.maxpool3 = nn.MaxPool2d(2, stride = 2)
-
-        self.valence_predictor = Single_Dimension_Classifier(
-                        input_size = (self.input_size*self.num_outchannels)//8,
-                        hidden_size = self.hidden_size,
-                        num_layers = self.num_layers,
-                        bi = bi)
-        self.arousal_predictor = Single_Dimension_Classifier(
-                        input_size = (self.input_size*self.num_outchannels)//8,
-                        hidden_size = self.hidden_size,
-                        num_layers = self.num_layers,
-                        bi = bi)
-        self.dominance_predictor = Single_Dimension_Classifier(
-                        input_size = (self.input_size*self.num_outchannels)//8,
-                        hidden_size = self.hidden_size,
-                        num_layers = self.num_layers,
-                        bi = bi)
-
-    def forward(self, x):
-        '''
-        x[0] is size (batch_size, max_seq_length, feature_dim)
-        x[1] is size (batch_size, 1), contains seq_lens
-        batch is in descending seq_len order
-        '''
-        x_data = x[0]
-#         print(x_data.size())
-        x_lens = x[1]
-
-        batch_size = x_data.size(0)
-        no_features = x_data.size(2)
-
-        #Convolutional layers
-        x_data = x_data.unsqueeze(1)
-        x_data = self.maxpool1(F.relu(self.conv1(x_data)))
-        x_data = self.maxpool2(F.relu(self.conv2(x_data)))
-        x_data = self.maxpool3(F.relu(self.conv3(x_data)))
-        x_lens = x_lens//8    # seq_len have got ~4 times shorted
-        # x = (B, channels, max_l//4, n_mels//4)
-
-        #Recurrent layers
-
-        x_data = x_data.permute(0,2,1,3)
-        x_data = x_data.contiguous().view(batch_size, -1, self.num_outchannels*no_features//8)
-        #Now x = (B, max_l//4, channels*n_mels//4)
-
-
-        x_data = nn.utils.rnn.pack_padded_sequence(x_data, x_lens,
-                                                   batch_first=True,
-                                                   enforce_sorted=True)
-
-        #PASS INTO 3 single_dim_predictors
-        x_val = self.valence_predictor(x_data, batch_size)
-        x_aro = self.arousal_predictor(x_data, batch_size)
-        x_dom = self.dominance_predictor(x_data, batch_size)
-
-
-        return x_val, x_aro, x_dom
-
-class Single_Dimension_Classifier(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bi = False):
-        super(Single_Dimension_Classifier, self).__init__()
-
-        self.hidden_size = hidden_size
-        self.input_size = input_size # == n_mels
-        self.num_layers = num_layers
-        self.num_outchannels = 32
-        self.m_factor = 2 if bi else 1
-
-
-        self.lstm1 = nn.LSTM(input_size = self.input_size,
-                           hidden_size = self.hidden_size, num_layers = self.num_layers,
-                           batch_first = True, bidirectional = bi)
-        self.att = Average_Weighted_Attention(self.hidden_size*self.m_factor)
-
-        self.fc1 = nn.Linear(self.hidden_size*self.m_factor, (self.hidden_size*self.m_factor)//2)
-        self.fc2 = nn.Linear((self.hidden_size*self.m_factor)//2, 3)
-
-    def forward(self, x, batch_size):
-
-
-        h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
-
-        c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
-
-        #LSTM returns: (seq_len, batch, num_directions * hidden_size),
-        #              ((num_layers * num_directions, batch, hidden_size), c_n)
-        x_data,_ = self.lstm1(x, (h0,c0))
-#         x_data,_ = self.gru1(x_data, h0)
-
-        x_data, x_lens = torch.nn.utils.rnn.pad_packed_sequence(x_data, batch_first=True)
-
-        x_data = self.att(x_data)
-
-        x_data = F.relu(self.fc1(x_data))
-        x_data = self.fc2(x_data)
-
-        return x_data
+    model = StarGAN_emo_VC1(config)
