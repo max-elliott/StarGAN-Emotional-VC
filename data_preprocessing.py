@@ -8,6 +8,9 @@ import torch.nn as nn
 import audio_utils
 import pickle
 
+# ./google-cloud-sdk/bin/gcloud compute ssh --project mscproject1 --zone europe-west4-a pytorch-1-1-vm -- -L 8080:localhost:8080
+# zipped wav data at https://storage.googleapis.com/emo-vc-storage/IEMOCAP.zip
+
 dataset_dir = "/Users/Max/MScProject/datasets/IEMOCAP"
 n_speakers = 10
 n_emotions = 7
@@ -78,7 +81,7 @@ def cont2list(cont, binned = False):
     #Option to make the values discrete: low(0), med(1) or high(2)
     if binned:
         for i, val in enumerate(list):
-            if val < 2:
+            if val <= 2:
                 list[i] = 0
             elif val < 4:
                 list[i] = 1
@@ -205,36 +208,37 @@ def load_data(filename):
 
 if __name__ == "__main__":
 
-    for i in range(1,6):
+    # for i in range(1,6):
+    #
+    #     ses_number = str(i)
+    #
+    #     session_dir = dataset_dir + "/Session" + ses_number
+    #
+    #     filenames, mels, specs, labels, conts, conts_dis, speakers = get_session_data(
+    #                                         session_dir, exclude_unlabelled = True)
+    #
+    #     # print(len(mels))
+    #     save_data(filenames, dataset_dir + '/Processed_data/filenames' + ses_number)
+    #     save_data(mels, dataset_dir + '/Processed_data/melspecs' + ses_number)
+    #     save_data(specs, dataset_dir + '/Processed_data/specs' + ses_number)
+    #     save_data(labels, dataset_dir + '/Processed_data/labels' + ses_number)
+    #     save_data(conts, dataset_dir + '/Processed_data/conts' + ses_number)
+    #     save_data(conts_dis, dataset_dir + '/Processed_data/conts_dis' + ses_number)
+    #     save_data(speakers, dataset_dir + '/Processed_data/speakers' + ses_number)
+    #     print('Done ' + ses_number + ".")
 
-        ses_number = str(i)
-
-        session_dir = dataset_dir + "/Session" + ses_number
-
-        filenames, mels, specs, labels, conts, conts_dis, speakers = get_session_data(
-                                            session_dir, exclude_unlabelled = True)
-
-        # print(len(mels))
-        save_data(filenames, dataset_dir + '/Processed_data/filenames' + ses_number)
-        save_data(mels, dataset_dir + '/Processed_data/melspecs' + ses_number)
-        save_data(specs, dataset_dir + '/Processed_data/specs' + ses_number)
-        save_data(labels, dataset_dir + '/Processed_data/labels' + ses_number)
-        save_data(conts, dataset_dir + '/Processed_data/conts' + ses_number)
-        save_data(conts_dis, dataset_dir + '/Processed_data/conts_dis' + ses_number)
-        save_data(speakers, dataset_dir + '/Processed_data/speakers' + ses_number)
-        print('Done ' + ses_number + ".")
-
-    # wav = get_wav_and_labels("Ses01F_impro03_F001.wav", dataset_dir + "/Session1")[0]
+    wav = get_wav_and_labels("Ses01F_impro03_F001.wav", dataset_dir + "/Session1")[0]
     # wav2 = get_wav_and_labels("Ses01F_impro03_F002.wav", dataset_dir + "/Session1")[0]
-    #
-    # spec = audio_utils.wav2spectrogram(wav)
+
+    spec = audio_utils.wav2spectrogram(wav)
     # spec2 = audio_utils.wav2spectrogram(wav2)
-    # print(spec.shape)
+    print(spec.shape)
     # print(spec2.shape)
-    # audio_utils.plot_spec(spec, type = 'log')
+    audio_utils.plot_spec(spec, type = 'log')
     #
-    # melspec = audio_utils.spectrogram2melspectrogram(spec)
-    # audio_utils.plot_spec(melspec)
+    melspec = audio_utils.spectrogram2melspectrogram(spec)
+    print(melspec.shape)
+    audio_utils.plot_spec(melspec)
     #
     # reproduced = audio_utils.spectrogram2wav(spec)
     #

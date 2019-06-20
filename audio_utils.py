@@ -21,7 +21,7 @@ class hyperparams(object):
         self.frame_length = 0.05 # seconds
         self.hop_length = int(self.sr*self.frame_shift) # samples  This is dependent on the frame_shift.
         self.win_length = int(self.sr*self.frame_length) # samples This is dependent on the frame_length.
-        self.n_mels = 80 # Number of Mel banks to generate
+        self.n_mels = 128 # Number of Mel banks to generate
         self.power = 1.2 # Exponent for amplifying the predicted magnitude
         self.n_iter = 100 # Number of inversion iterations
         self.use_log_magnitude = True # if False, use magnitude
