@@ -1,0 +1,11 @@
+model:
+    optimizer:
+        beta1: 0.9
+        beta2: 0.999
+        g_lr: 0.0001
+        d_lr: 0.0001
+        emo_cls_lr: 0.0001
+        speaker_cls_lr: 0.0001
+
+    main_model:
+        num_feats: 128
