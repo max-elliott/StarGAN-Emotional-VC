@@ -91,6 +91,19 @@ def cont2list(cont, binned = False):
     else:
         return list
 
+def concatenate_targets(emo_labels, speakers, dims, dims_dis):
+
+    all_labels = np.zeros((len(l2), 8))
+    # print(all_labels)
+
+    for i, row in enumerate(all_labels):
+        row[0] = emo_labels[i]
+        row[1] = speakers[i]
+        row[2:5] = dims[i]
+        row[5:8] = dims_dis[i]
+
+    return all_labels
+
 def get_wav_and_labels(filename, session_dir):
 
     folder = filename[:-9]
@@ -205,6 +218,25 @@ def load_data(filename):
         data = pickle.load(fp)
 
     return data
+
+def load_session_data(session_num, directory):
+    '''
+    str: session_num
+    str: directory
+    returns:
+        lists for filenames, labels, melspecs of that session
+        melspecs are of the form (n_mels, seq_len)
+    '''
+#     session_num = str(session_num)
+    names = pp.load_data(directory + "/filenames" + session_num)
+    labels = pp.load_data(directory + "/labels" + session_num)
+    speakers = pp.load_data(directory + "/speakers" + session_num)
+    dims = pp.load_data(directory + "/conts" + session_num)
+    dims_dis = pp.load_data(directory + "/conts_dis" + session_num)
+    # specs = pp.load_data(directory + "/specs" + session_num)
+    melspecs = pp.load_data(directory + "/melspecs" + session_num)
+
+    return names, melspecs, labels, speakers, dims, dims_dis
 
 if __name__ == "__main__":
 
