@@ -134,3 +134,8 @@ def plot_spec(spec, type = 'mel'):
     plt.colorbar(format='%+2.0f dB')
     plt.title('Power spectrogram')
     plt.show()
+
+if __name__ == '__main__':
+    
+    files = librosa.util.find_files("/Users/Max/MScProject/datasets/test_dir")
+    print(files)

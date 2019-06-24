@@ -91,9 +91,9 @@ def cont2list(cont, binned = False):
     else:
         return list
 
-def concatenate_targets(emo_labels, speakers, dims, dims_dis):
+def concatenate_labels(emo_labels, speakers, dims, dims_dis):
 
-    all_labels = np.zeros((len(l2), 8))
+    all_labels = np.zeros((len(emo_labels), 8))
     # print(all_labels)
 
     for i, row in enumerate(all_labels):
