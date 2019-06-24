@@ -1,11 +1,41 @@
 model:
-    optimizer:
-        beta1: 0.9
-        beta2: 0.999
-        g_lr: 0.0001
-        d_lr: 0.0001
-        emo_cls_lr: 0.0001
-        speaker_cls_lr: 0.0001
 
-    main_model:
-        num_feats: 128
+      num_feats: 128
+      batch_size: 64
+
+
+loss:
+
+    lambda_gp: 10
+    lambda_g_emo_cls: 1
+    lambda_cycle: 10
+    lambda_id: 10
+
+    num_iters: 10000
+    num_iters_decay: 5000
+    resume_iters: 1
+
+    d_to_g_ratio: 5
+
+optimizer:
+
+    beta1: 0.9
+    beta2: 0.999
+
+    g_lr: 0.0001
+    d_lr: 0.0001
+    emo_cls_lr: 0.0001
+    dim_cls_lr: 0.0001
+    speaker_cls_lr: 0.0001
+
+logs:
+
+    tensorboard: True
+
+    log_dir: './logs'
+    sample_dir: './samples'
+    model_save_dir: './checkpoints'
+
+    log_every: 1
+    sample_every: 50
+    model_save_every: 50

@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import copy
 import audio_utils
-import yaml
+import os
 from classifiers import *
 from average_weighted_attention import Average_Weighted_Attention
 
@@ -13,14 +13,16 @@ class StarGAN_emo_VC1(object):
     '''
     The proposed model of this project.
     '''
-    def __init__(self, config):
+    def __init__(self, config, name):
         '''
         Need config for input_size, hidden_size, num_layers, num_classes, bi = False
         '''
         super(StarGAN_emo_VC1, self).__init__()
         self.config = config
+        self.save_dir = config['logs']['model_save_dir']
+        self.name = name
         # Need completing
-        print("Test")
+
         self.build_model(self.config)
 
 
@@ -28,14 +30,14 @@ class StarGAN_emo_VC1(object):
         self.G.train()
         self.D.train()
         self.emo_cls.train()
-        self.speaker_cls.train()
+        # self.speaker_cls.train()
         # self.dimension_cls.train()
 
     def set_eval_mode(self):
         self.G.eval()
         self.D.eval()
         self.emo_cls.eval()
-        self.speaker_cls.eval()
+        # self.speaker_cls.eval()
         # self.dimension_cls.eval()
 
     def to_device(self, device = torch.device('cuda')):
@@ -43,14 +45,14 @@ class StarGAN_emo_VC1(object):
             self.G.to(device = device)
             self.D.to(device = device)
             self.emo_cls.to(device = device)
-            self.speaker_cls.to(device = device)
+            # self.speaker_cls.to(device = device)
             # self.dimension_cls.to(device = device)
         else:
             print("Device not available")
 
     def build_model(self, config):
 
-        self.num_input_feats = config['model']['main_model']['num_feats']
+        self.num_input_feats = config['model']['num_feats']
         self.hidden_size = 128
         self.num_layers = 2
         self.num_emotions = 4
@@ -64,28 +66,32 @@ class StarGAN_emo_VC1(object):
         self.emo_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
                                           self.num_layers, self.num_emotions,
                                           bi = self.bi)
-        self.speaker_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
-                                          self.num_layers, self.num_speakers,
-                                          bi = self.bi)
+        # self.speaker_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
+        #                                   self.num_layers, self.num_speakers,
+        #                                   bi = self.bi)
         # self.dimension_cls = Dimension_Classifier(self.num_input_feats, self.hidden_size,
         #                                   self.num_layers, bi = self.bi)
 
         print("Building optimizers")
 
-        con_opt = config['model']['optimizer']
+        con_opt = config['optimizer']
         self.g_optimizer = torch.optim.Adam(self.G.parameters(), con_opt['g_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.d_optimizer = torch.optim.Adam(self.D.parameters(), con_opt['d_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
-        self.speaker_cls_optimizer = torch.optim.Adam(self.speaker_cls.parameters(), con_opt['speaker_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
+        # self.speaker_cls_optimizer = torch.optim.Adam(self.speaker_cls.parameters(), con_opt['speaker_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
         # self.dim_cls_optimizer = torch.optim.Adam(self.dim_cls.parameters(), config.dim_cls_lr,[config.beta1, config.beta2])
 
         print("Network parameter list:")
 
-        self.print_network(self.G, 'G')
-        self.print_network(self.D, 'D')
-        self.print_network(self.emo_cls, 'Emotion Classifier')
-        self.print_network(self.speaker_cls, 'Speaker Classifier')
+        G_count = self.print_network(self.G, 'G')
+        D_count = self.print_network(self.D, 'D')
+        emo_count = self.print_network(self.emo_cls, 'Emotion Classifier')
+        # self.print_network(self.speaker_cls, 'Speaker Classifier')
         # self.print_network(self.dim_cls, 'Dimensional Emotions Classifier')
+
+        total = G_count + D_count + emo_count
+
+        print("TOTAL NUMBER OF PARAMETERS = {}".format(total))
 
         self.to_device()
 
@@ -97,15 +103,33 @@ class StarGAN_emo_VC1(object):
         print(model)
         print(name)
         print("The number of parameters: {}".format(num_params))
+        return num_params
 
     def reset_grad(self):
         """Reset the gradient buffers."""
         self.g_optimizer.zero_grad()
         self.d_optimizer.zero_grad()
         self.emo_cls_optimizer.zero_grad()
-        self.speaker_cls_optimizer.zero_grad()
+        # self.speaker_cls_optimizer.zero_grad()
         # self.dim_cls_optimizer.zero_grad()
 
+    def save(self, save_dir = None, iter = 0):
+
+        if save_dir == None:
+            save_dir = self.save_dir
+
+        path = os.path.join(save_dir, self.name)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        D_path = os.path.join(path, "{:05}_D.ckpt".format(iter))
+        G_path = os.path.join(path, "{:05}_G.ckpt".format(iter))
+        emo_path = os.path.join(path, "{:05}_C_emo.ckpt".format(iter))
+
+        torch.save(self.D.state_dict(), D_path)
+        torch.save(self.G.state_dict(), G_path)
+        torch.save(self.emo_cls.state_dict(), emo_path)
+
+        print("Saved model to {}.".format(path))
 
     # def foward(self, x, c_new, c_original):
     #     '''
@@ -291,8 +315,11 @@ class Discriminator(nn.Module):
 
 if __name__ == '__main__':
 
+    import yaml
     config = yaml.load(open('./config.yaml', 'r'))
 
     print("Made config.")
 
-    model = StarGAN_emo_VC1(config)
+    model = StarGAN_emo_VC1(config, "TestModel")
+
+    model.save(save_dir = './checkpoints', iter = 4)
