@@ -7,7 +7,8 @@ import audio_utils
 from average_weighted_attention import Average_Weighted_Attention
 
 class Emotion_Classifier(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes, bi = False):
+    def __init__(self, input_size, hidden_size, num_layers, num_classes, bi = False,
+                 device = 'cuda'):
         '''
         NOTE: input size must be directly divisible by 4
         Is also used for speaker classifier
@@ -19,6 +20,8 @@ class Emotion_Classifier(nn.Module):
         self.num_classes = num_classes
         self.num_outchannels = 32
         self.m_factor = 2 if bi else 1
+
+        self.device = device
 
         kernel = 7
         padding = int((kernel-1)/2)
@@ -38,20 +41,18 @@ class Emotion_Classifier(nn.Module):
         self.drop = nn.Dropout(p = 0.2)
         self.out = nn.Linear(64,self.num_classes)
 
-    def forward(self, x):
+    def forward(self, x, x_lens):
         '''
-        x[0] is size (batch_size, max_seq_length, feature_dim)
-        x[1] is size (batch_size, 1), contains seq_lens
+        x is size (batch_size, max_seq_length, feature_dim)
+        x_lens is size (batch_size, 1), contains seq_lens
         batch is in descending seq_len order
         '''
-        x_data = x[0]
-        x_lens = x[1]
 
-        batch_size = x_data.size(0)
-        no_features = x_data.size(2)
+        batch_size = x.size(0)
+        no_features = x.size(2)
 
         #Convolutional layers
-        x_data = x_data.unsqueeze(1)
+        x_data = x.unsqueeze(1)
         x_data = self.maxpool1(F.relu(self.conv1(x_data)))
         x_data = self.maxpool2(F.relu(self.conv2(x_data)))
         x_data = self.maxpool3(F.relu(self.conv3(x_data)))
@@ -70,10 +71,10 @@ class Emotion_Classifier(nn.Module):
                                                    enforce_sorted=True)
 
         h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         #LSTM returns: (seq_len, batch, num_directions * hidden_size),
         #              ((num_layers * num_directions, batch, hidden_size), c_n)
@@ -98,7 +99,7 @@ class Dimension_Classifier(nn.Module):
     Uses three conv2d->maxpooling layers, into two separate sequential modelling
     networks for prediction of valence and arousal.
     '''
-    def __init__(self, input_size, hidden_size, num_layers, bi = False):
+    def __init__(self, input_size, hidden_size, num_layers, bi = False, device = 'cuda'):
         '''
         NOTE: input size must be directly divisible by 4
         '''
@@ -122,17 +123,17 @@ class Dimension_Classifier(nn.Module):
                         input_size = (self.input_size*self.num_outchannels)//8,
                         hidden_size = self.hidden_size,
                         num_layers = self.num_layers,
-                        bi = bi)
+                        bi = bi, device = device)
         self.arousal_predictor = Single_Dimension_Classifier(
                         input_size = (self.input_size*self.num_outchannels)//8,
                         hidden_size = self.hidden_size,
                         num_layers = self.num_layers,
-                        bi = bi)
+                        bi = bi, device = device)
         self.dominance_predictor = Single_Dimension_Classifier(
                         input_size = (self.input_size*self.num_outchannels)//8,
                         hidden_size = self.hidden_size,
                         num_layers = self.num_layers,
-                        bi = bi)
+                        bi = bi, device = device)
 
     def forward(self, x):
         '''
@@ -175,7 +176,7 @@ class Dimension_Classifier(nn.Module):
         return x_val, x_aro, x_dom
 
 class Single_Dimension_Classifier(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, bi = False):
+    def __init__(self, input_size, hidden_size, num_layers, bi = False, device = 'cuda'):
         super(Single_Dimension_Classifier, self).__init__()
 
         self.hidden_size = hidden_size
@@ -184,6 +185,7 @@ class Single_Dimension_Classifier(nn.Module):
         self.num_outchannels = 32
         self.m_factor = 2 if bi else 1
 
+        self.device = device
 
         self.lstm1 = nn.LSTM(input_size = self.input_size,
                            hidden_size = self.hidden_size, num_layers = self.num_layers,
@@ -197,10 +199,10 @@ class Single_Dimension_Classifier(nn.Module):
 
 
         h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
+                         self.hidden_size).to(device = self.device, dtype=torch.float)
 
         c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = device, dtype=torch.float)
+                         self.hidden_size).to(device = self.device, dtype=torch.float)
 
         #LSTM returns: (seq_len, batch, num_directions * hidden_size),
         #              ((num_layers * num_directions, batch, hidden_size), c_n)

@@ -1,3 +1,10 @@
+import torch
+import torch.nn as nn
+import torch.utils.data as data_utils
+import torch.nn.functional as F
+
+import numpy as np
+
 class variable_length_dataset(data_utils.Dataset):
     def __init__(self, data, targets):
         super(variable_length_dataset, self).__init__()
@@ -108,3 +115,11 @@ def make_dataloader(x, y, batch_size = 64, split = 0.9):
                                          num_workers = 4, shuffle = True)
 
     return train_loader, test_loader
+
+if __name__ == '__main__':
+
+    t = torch.Tensor([0,1,2,3,2,2,0]).long()
+    ones = F.one_hot(t, num_classes = 4).float()
+
+    print(ones)
+    print(ones.type())

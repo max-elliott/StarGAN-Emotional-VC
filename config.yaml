@@ -36,6 +36,9 @@ logs:
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 1
+    log_every: 10
     sample_every: 50
     model_save_every: 50
+
+verbose: False
+device: 'cpu'

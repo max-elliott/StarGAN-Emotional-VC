@@ -219,7 +219,7 @@ def load_data(filename):
 
     return data
 
-def load_session_data(session_num, directory):
+def load_session_data(session_num, directory= dataset_dir + "/Processed_data"):
     '''
     str: session_num
     str: directory
@@ -227,14 +227,14 @@ def load_session_data(session_num, directory):
         lists for filenames, labels, melspecs of that session
         melspecs are of the form (n_mels, seq_len)
     '''
-#     session_num = str(session_num)
-    names = pp.load_data(directory + "/filenames" + session_num)
-    labels = pp.load_data(directory + "/labels" + session_num)
-    speakers = pp.load_data(directory + "/speakers" + session_num)
-    dims = pp.load_data(directory + "/conts" + session_num)
-    dims_dis = pp.load_data(directory + "/conts_dis" + session_num)
+    session_num = str(session_num)
+    names = load_data(directory + "/filenames" + session_num)
+    labels = load_data(directory + "/labels" + session_num)
+    speakers = load_data(directory + "/speakers" + session_num)
+    dims = load_data(directory + "/conts" + session_num)
+    dims_dis = load_data(directory + "/conts_dis" + session_num)
     # specs = pp.load_data(directory + "/specs" + session_num)
-    melspecs = pp.load_data(directory + "/melspecs" + session_num)
+    melspecs = load_data(directory + "/melspecs" + session_num)
 
     return names, melspecs, labels, speakers, dims, dims_dis
 

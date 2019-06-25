@@ -81,17 +81,18 @@ class StarGAN_emo_VC1(object):
         # self.speaker_cls_optimizer = torch.optim.Adam(self.speaker_cls.parameters(), con_opt['speaker_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
         # self.dim_cls_optimizer = torch.optim.Adam(self.dim_cls.parameters(), config.dim_cls_lr,[config.beta1, config.beta2])
 
-        print("Network parameter list:")
+        if self.config['verbose']:
+            print("Network parameter list:")
 
-        G_count = self.print_network(self.G, 'G')
-        D_count = self.print_network(self.D, 'D')
-        emo_count = self.print_network(self.emo_cls, 'Emotion Classifier')
-        # self.print_network(self.speaker_cls, 'Speaker Classifier')
-        # self.print_network(self.dim_cls, 'Dimensional Emotions Classifier')
+            G_count = self.print_network(self.G, 'G')
+            D_count = self.print_network(self.D, 'D')
+            emo_count = self.print_network(self.emo_cls, 'Emotion Classifier')
+            # self.print_network(self.speaker_cls, 'Speaker Classifier')
+            # self.print_network(self.dim_cls, 'Dimensional Emotions Classifier')
 
-        total = G_count + D_count + emo_count
+            total = G_count + D_count + emo_count
 
-        print("TOTAL NUMBER OF PARAMETERS = {}".format(total))
+            print("TOTAL NUMBER OF PARAMETERS = {}".format(total))
 
         self.to_device()
 
@@ -121,15 +122,47 @@ class StarGAN_emo_VC1(object):
         path = os.path.join(save_dir, self.name)
         if not os.path.exists(path):
             os.makedirs(path)
-        D_path = os.path.join(path, "{:05}_D.ckpt".format(iter))
-        G_path = os.path.join(path, "{:05}_G.ckpt".format(iter))
-        emo_path = os.path.join(path, "{:05}_C_emo.ckpt".format(iter))
 
-        torch.save(self.D.state_dict(), D_path)
-        torch.save(self.G.state_dict(), G_path)
-        torch.save(self.emo_cls.state_dict(), emo_path)
+        state = {'D': self.D.state_dict(),
+                 'G': self.G.state_dict(),
+                 'emo': self.emo_cls.state_dict(),
+                 'd_opt': self.d_optimizer.state_dict(),
+                 'g_opt': self.g_optimizer.state_dict(),
+                 'emo_opt': self.emo_cls_optimizer.state_dict(),
+                }
 
-        print("Saved model to {}.".format(path))
+        path = os.path.join(path, "{:05}.ckpt".format(iter))
+
+        torch.save(state, path)
+        # torch.save(self.G.state_dict(), G_path)
+        # torch.save(self.emo_cls.state_dict(), emo_path)
+
+        print("Saved model as {}.".format(path))
+
+    def load(self, load_dir, iter):
+
+        if load_dir[-1] == '/':
+            load_dir = load_dir[0:-1]
+
+        self.name = os.path.basename(load_dir)
+
+        path = os.path.join(load_dir, "{:05}.ckpt".format(iter))
+        # G_path = os.path.join(load_dir, "{:05}_G.ckpt".format(iter))
+        # emo_path = os.path.join(load_dir, "{:05}_C_emo.ckpt".format(iter))
+
+        dictionary = torch.load(path)
+        # G_dict = torch.load(G_path)
+        # emo_dict = torch.load(emo_path)
+
+        self.D.load_state_dict(dictionary['D'])
+        self.G.load_state_dict(dictionary['G'])
+        self.emo_cls.load_state_dict(dictionary['emo'])
+
+        self.d_optimizer.load_state_dict(dictionary['d_opt'])
+        self.g_optimizer.load_state_dict(dictionary['g_opt'])
+        self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'])
+
+        print("Model and optimizers loaded.")
 
     # def foward(self, x, c_new, c_original):
     #     '''
@@ -220,11 +253,15 @@ class Generator(nn.Module):
         self.deconv = nn.ConvTranspose2d(36, 1, (3,9), (1,1), (1,4))
 
     def forward(self, x, c):
+        x = x.unsqueeze(1)
         x = self.downsample(x)
         c = c.view(c.size(0), c.size(1), 1, 1)
 
+        print(x.size())
         c1 = c.repeat(1, 1, x.size(2), x.size(3))
+        print(c1.size())
         x = torch.cat([x, c1], dim=1)
+        print(x.size())
         x = self.up1(x)
 
         c2 = c.repeat(1,1,x.size(2), x.size(3))
@@ -320,6 +357,13 @@ if __name__ == '__main__':
 
     print("Made config.")
 
-    model = StarGAN_emo_VC1(config, "TestModel")
+    model = StarGAN_emo_VC1(config, "NewTest")
+    # print(model.name)
+    load_dir = './checkpoints/NewTest/'
 
-    model.save(save_dir = './checkpoints', iter = 4)
+    # model.load(load_dir, 4)
+
+    # print(model.name)
+
+    # model.save(iter = 4)
+    model.load(load_dir, 4)
