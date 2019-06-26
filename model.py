@@ -23,7 +23,7 @@ class StarGAN_emo_VC1(object):
         self.name = name
         # Need completing
 
-        self.build_model(self.config)
+        self.build_model()
 
 
     def set_train_mode(self):
@@ -45,14 +45,15 @@ class StarGAN_emo_VC1(object):
             self.G.to(device = device)
             self.D.to(device = device)
             self.emo_cls.to(device = device)
+            self.emo_cls.device = device
             # self.speaker_cls.to(device = device)
             # self.dimension_cls.to(device = device)
         else:
             print("Device not available")
 
-    def build_model(self, config):
+    def build_model(self):
 
-        self.num_input_feats = config['model']['num_feats']
+        self.num_input_feats = self.config['model']['num_feats']
         self.hidden_size = 128
         self.num_layers = 2
         self.num_emotions = 4
@@ -74,7 +75,7 @@ class StarGAN_emo_VC1(object):
 
         print("Building optimizers")
 
-        con_opt = config['optimizer']
+        con_opt = self.config['optimizer']
         self.g_optimizer = torch.optim.Adam(self.G.parameters(), con_opt['g_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.d_optimizer = torch.optim.Adam(self.D.parameters(), con_opt['d_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
@@ -94,7 +95,7 @@ class StarGAN_emo_VC1(object):
 
             print("TOTAL NUMBER OF PARAMETERS = {}".format(total))
 
-        self.to_device()
+        self.to_device(device = 'cpu')
 
     def print_network(self, model, name):
         """Print out the network information."""
@@ -236,32 +237,44 @@ class Generator(nn.Module):
     """docstring for Generator."""
     def __init__(self):
         super(Generator, self).__init__()
-        self.downsample = nn.Sequential(
-            Down2d(1, 32, (3,9), (1,1), (1,4)),
-            Down2d(32, 64, (4,8), (2,2), (1,3)),
-            Down2d(64, 128, (4,8), (2,2), (1,3)),
-            Down2d(128, 64, (3,5), (1,1), (1,2)),
-            Down2d(64, 5, (9,5), (9,1), (1,2))
-        )
+        # self.downsample = nn.Sequential(
+        self.down1 = Down2d(1, 32, (9,3), (1,1), (4,1))
+        self.down2 = Down2d(32, 64, (8,4), (2,2), (3,1))
+        self.down3 = Down2d(64, 128, (8,4), (2,2), (3,1))
+        self.down4 = Down2d(128, 64, (5,3), (1,1), (2,1))
+        self.down5 = Down2d(64, 5, (5,8), (1,8), (2,1))
+        # )
 
 
-        self.up1 = Up2d(9, 64, (9,5), (9,1), (0,2))
-        self.up2 = Up2d(68, 128, (3,5), (1,1), (1,2))
-        self.up3 = Up2d(132, 64, (4,8), (2,2), (1,3))
-        self.up4 = Up2d(68, 32, (4,8), (2,2), (1,3))
+        self.up1 = Up2d(9, 64, (5,8), (1,8), (2,0))
+        self.up2 = Up2d(68, 128, (5,3), (1,1), (2,1))
+        self.up3 = Up2d(132, 64, (8,4), (2,2), (3,1))
+        self.up4 = Up2d(68, 32, (8,4), (2,2), (3,1))
 
-        self.deconv = nn.ConvTranspose2d(36, 1, (3,9), (1,1), (1,4))
+        self.deconv = nn.ConvTranspose2d(36, 1, (9,3), (1,1), (4,1))
 
     def forward(self, x, c):
-        x = x.unsqueeze(1)
-        x = self.downsample(x)
+        # x = x.unsqueeze(1)
+        # x = self.downsample(x)
+
+        x = self.down1(x)
+        # print(x.size())
+        x = self.down2(x)
+        # print(x.size())
+        x = self.down3(x)
+        # print(x.size())
+        x = self.down4(x)
+        # print(x.size())
+        x = self.down5(x)
+        # print(x.size())
+
         c = c.view(c.size(0), c.size(1), 1, 1)
 
-        print(x.size())
+
         c1 = c.repeat(1, 1, x.size(2), x.size(3))
-        print(c1.size())
+
         x = torch.cat([x, c1], dim=1)
-        print(x.size())
+
         x = self.up1(x)
 
         c2 = c.repeat(1,1,x.size(2), x.size(3))
@@ -287,36 +300,38 @@ class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
 
-        self.d1 = Down2d(5, 32, (3,9), (1,1), (1,4))
-        self.d2 = Down2d(36, 32, (3,8), (1,2), (1,3))
-        self.d3 = Down2d(36, 32, (3,8), (1,2), (1,3))
-        self.d4 = Down2d(36, 32, (3,6), (1,2), (1,2))
+        self.d1 = Down2d(5, 32, (9,3), (1,1), (4,1))
+        self.d2 = Down2d(36, 32, (8,3), (2,1), (3,1))
+        self.d3 = Down2d(36, 32, (8,3), (2,1), (3,1))
+        self.d4 = Down2d(36, 32, (6,3), (2,1), (2,1))
 
-        self.conv = nn.Conv2d(36, 1, (36,5), (36,1), (0,2))
-        self.pool = nn.AvgPool2d((1,64))
+        self.conv = nn.Conv2d(36, 1, (36,8), (36,8), (2,0))
+        self.pool = nn.AdaptiveAvgPool2d(1)
+
     def forward(self, x, c):
         c = c.view(c.size(0), c.size(1), 1, 1)
 
         c1 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c1], dim=1)
         x = self.d1(x)
+        # print(x.size())
 
         c2 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c2], dim=1)
         x = self.d2(x)
-
+        # print(x.size())
         c3 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c3], dim=1)
         x = self.d3(x)
-
+        # print(x.size())
         c4 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c4], dim=1)
         x = self.d4(x)
-
+        # print(x.size())
         c5 = c.repeat(1, 1, x.size(2), x.size(3))
         x = torch.cat([x, c5], dim=1)
         x = self.conv(x)
-
+        # print(x.size())
         x = self.pool(x)
         x = torch.squeeze(x)
         x = torch.tanh(x)

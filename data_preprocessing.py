@@ -73,7 +73,7 @@ def getOneHot(label, n_labels):
 
 def cont2list(cont, binned = False):
 
-    list = np.zeros(3)
+    list = [0,0,0]
     list[0] = float(cont[1:6])
     list[1] = float(cont[9:14])
     list[2] = float(cont[17:22])
@@ -91,16 +91,21 @@ def cont2list(cont, binned = False):
     else:
         return list
 
-def concatenate_labels(emo_labels, speakers, dims, dims_dis):
+def concatenate_labels(emo, speaker, dims, dims_dis):
 
-    all_labels = np.zeros((len(emo_labels), 8))
+    all_labels = torch.zeros(8)
     # print(all_labels)
 
-    for i, row in enumerate(all_labels):
-        row[0] = emo_labels[i]
-        row[1] = speakers[i]
-        row[2:5] = dims[i]
-        row[5:8] = dims_dis[i]
+    # for i, row in enumerate(all_labels):
+    all_labels[0] = emo
+    all_labels[1] = speaker
+    all_labels[2] = dims[0]
+    all_labels[3] = dims[1]
+    all_labels[4] = dims[2]
+    all_labels[5] = dims_dis[0]
+    all_labels[6] = dims_dis[1]
+    all_labels[7] = dims_dis[2]
+
 
     return all_labels
 
@@ -128,8 +133,9 @@ def get_wav_and_labels(filename, session_dir):
 
     audio = audio_utils.load_wav(wav_path)
     audio = np.array(audio, dtype = np.float32)
+    labels = concatenate_labels(category, speaker, dimensions, dimensions_dis)
 
-    return audio, category, dimensions, dimensions_dis, speaker
+    return audio, labels
 
 def get_session_data(data_dir, exclude_unlabelled = True):
 
@@ -143,6 +149,7 @@ def get_session_data(data_dir, exclude_unlabelled = True):
     conts = []
     conts_dis = []
     speakers = []
+    all_labels = []
     for foldername in os.listdir(data_dir):
 
         if not (foldername == "Annotations" or foldername == ".DS_Store"):
@@ -150,10 +157,10 @@ def get_session_data(data_dir, exclude_unlabelled = True):
             for filename in os.listdir(data_dir + "/" + foldername):
 
                 if not filename == ".DS_Store":
-                    wav, label, cont, cont_dis, speaker = get_wav_and_labels(filename,
+                    wav, labels = get_wav_and_labels(filename,
                                                                     data_dir)
 
-                    if not (exclude_unlabelled and label == -1): #ignore some rare emotions
+                    if not (exclude_unlabelled and labels[0] == -1): #ignore some rare emotions
                         mel = audio_utils.wav2melspectrogram(wav)
                         spec = audio_utils.wav2spectrogram(wav)
 
@@ -161,14 +168,15 @@ def get_session_data(data_dir, exclude_unlabelled = True):
                         mels.append(torch.Tensor(mel))
                         specs.append(torch.Tensor(spec))
 
-                        labels.append(label)
-                        conts.append(cont)
-                        conts_dis.append(cont_dis)
-                        speakers.append(speaker)
+                        # labels.append(label)
+                        # conts.append(cont)
+                        # conts_dis.append(cont_dis)
+                        # speakers.append(speaker)
+                        all_labels.append(labels)
 
         print(foldername + " completed.")
 
-    return filenames, mels, specs, labels, conts, conts_dis,  speakers
+    return filenames, mels, specs, all_labels
 
 def all_wavs_and_labels(exclude_unlabelled = True):
 
@@ -230,47 +238,50 @@ def load_session_data(session_num, directory= dataset_dir + "/Processed_data"):
     session_num = str(session_num)
     names = load_data(directory + "/filenames" + session_num)
     labels = load_data(directory + "/labels" + session_num)
-    speakers = load_data(directory + "/speakers" + session_num)
-    dims = load_data(directory + "/conts" + session_num)
-    dims_dis = load_data(directory + "/conts_dis" + session_num)
-    # specs = pp.load_data(directory + "/specs" + session_num)
+    # speakers = load_data(directory + "/speakers" + session_num)
+    # dims = load_data(directory + "/conts" + session_num)
+    # dims_dis = load_data(directory + "/conts_dis" + session_num)
+    # # specs = pp.load_data(directory + "/specs" + session_num)
     melspecs = load_data(directory + "/melspecs" + session_num)
 
-    return names, melspecs, labels, speakers, dims, dims_dis
+    return names, melspecs, labels
 
 if __name__ == "__main__":
 
-    # for i in range(1,6):
-    #
-    #     ses_number = str(i)
-    #
-    #     session_dir = dataset_dir + "/Session" + ses_number
-    #
-    #     filenames, mels, specs, labels, conts, conts_dis, speakers = get_session_data(
-    #                                         session_dir, exclude_unlabelled = True)
-    #
-    #     # print(len(mels))
-    #     save_data(filenames, dataset_dir + '/Processed_data/filenames' + ses_number)
-    #     save_data(mels, dataset_dir + '/Processed_data/melspecs' + ses_number)
-    #     save_data(specs, dataset_dir + '/Processed_data/specs' + ses_number)
-    #     save_data(labels, dataset_dir + '/Processed_data/labels' + ses_number)
-    #     save_data(conts, dataset_dir + '/Processed_data/conts' + ses_number)
-    #     save_data(conts_dis, dataset_dir + '/Processed_data/conts_dis' + ses_number)
-    #     save_data(speakers, dataset_dir + '/Processed_data/speakers' + ses_number)
-    #     print('Done ' + ses_number + ".")
+    for i in range(1,2):
 
-    wav = get_wav_and_labels("Ses01F_impro03_F001.wav", dataset_dir + "/Session1")[0]
-    # wav2 = get_wav_and_labels("Ses01F_impro03_F002.wav", dataset_dir + "/Session1")[0]
+        ses_number = str(i)
 
-    spec = audio_utils.wav2spectrogram(wav)
-    # spec2 = audio_utils.wav2spectrogram(wav2)
-    print(spec.shape)
-    # print(spec2.shape)
-    audio_utils.plot_spec(spec, type = 'log')
+        session_dir = dataset_dir + "/Session" + ses_number
+
+        filenames, mels, specs, labels = get_session_data(session_dir, exclude_unlabelled = True)
+
+        # print(len(mels))
+        save_data(filenames, dataset_dir + '/Processed_data/filenames' + ses_number)
+        save_data(mels, dataset_dir + '/Processed_data/melspecs' + ses_number)
+        save_data(specs, dataset_dir + '/Processed_data/specs' + ses_number)
+        save_data(labels, dataset_dir + '/Processed_data/labels' + ses_number)
+        # save_data(conts, dataset_dir + '/Processed_data/conts' + ses_number)
+        # save_data(conts_dis, dataset_dir + '/Processed_data/conts_dis' + ses_number)
+        # save_data(speakers, dataset_dir + '/Processed_data/speakers' + ses_number)
+        print('Done ' + ses_number + ".")
+
+    print(len(mels), len(labels), labels[0].size())
+
+    # print(concatenate_labels(1,2,[3,4,5],[6,7,8]))
+
+    # wav = get_wav_and_labels("Ses01F_impro03_F001.wav", dataset_dir + "/Session1")[0]
+    # # wav2 = get_wav_and_labels("Ses01F_impro03_F002.wav", dataset_dir + "/Session1")[0]
     #
-    melspec = audio_utils.spectrogram2melspectrogram(spec)
-    print(melspec.shape)
-    audio_utils.plot_spec(melspec)
+    # spec = audio_utils.wav2spectrogram(wav)
+    # # spec2 = audio_utils.wav2spectrogram(wav2)
+    # print(spec.shape)
+    # # print(spec2.shape)
+    # audio_utils.plot_spec(spec, type = 'log')
+    # #
+    # melspec = audio_utils.spectrogram2melspectrogram(spec)
+    # print(melspec.shape)
+    # audio_utils.plot_spec(melspec)
     #
     # reproduced = audio_utils.spectrogram2wav(spec)
     #

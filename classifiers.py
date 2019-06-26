@@ -41,18 +41,18 @@ class Emotion_Classifier(nn.Module):
         self.drop = nn.Dropout(p = 0.2)
         self.out = nn.Linear(64,self.num_classes)
 
-    def forward(self, x, x_lens):
+    def forward(self, x_data, x_lens):
         '''
-        x is size (batch_size, max_seq_length, feature_dim)
+        x is size (batch_size, 1, max_seq_length, feature_dim)
         x_lens is size (batch_size, 1), contains seq_lens
         batch is in descending seq_len order
         '''
 
-        batch_size = x.size(0)
-        no_features = x.size(2)
+        batch_size = x_data.size(0)
+        no_features = x_data.size(3)
 
         #Convolutional layers
-        x_data = x.unsqueeze(1)
+        # x_data = x.unsqueeze(1)
         x_data = self.maxpool1(F.relu(self.conv1(x_data)))
         x_data = self.maxpool2(F.relu(self.conv2(x_data)))
         x_data = self.maxpool3(F.relu(self.conv3(x_data)))
@@ -149,7 +149,7 @@ class Dimension_Classifier(nn.Module):
         no_features = x_data.size(2)
 
         #Convolutional layers
-        x_data = x_data.unsqueeze(1)
+        # x_data = x_data.unsqueeze(1)
         x_data = self.maxpool1(F.relu(self.conv1(x_data)))
         x_data = self.maxpool2(F.relu(self.conv2(x_data)))
         x_data = self.maxpool3(F.relu(self.conv3(x_data)))

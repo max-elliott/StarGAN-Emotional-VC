@@ -8,14 +8,14 @@ loss:
 
     lambda_gp: 10
     lambda_g_emo_cls: 1
-    lambda_cycle: 10
-    lambda_id: 10
+    lambda_cycle: 1
+    lambda_id: 1
 
-    num_iters: 10000
-    num_iters_decay: 5000
-    resume_iters: 1
+    num_iters: 10
+    num_iters_decay: 5
+    resume_iters: 4
 
-    d_to_g_ratio: 5
+    d_to_g_ratio: 2
 
 optimizer:
 
@@ -25,20 +25,21 @@ optimizer:
     g_lr: 0.0001
     d_lr: 0.0001
     emo_cls_lr: 0.0001
-    dim_cls_lr: 0.0001
     speaker_cls_lr: 0.0001
+    dim_cls_lr: 0.0001
+
 
 logs:
 
-    tensorboard: True
+    use_tensorboard: False
 
     log_dir: './logs'
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 10
-    sample_every: 50
-    model_save_every: 50
+    log_every: 2
+    sample_every: 2
+    model_save_every: 2
 
 verbose: False
-device: 'cpu'
+device: torch.device('cpu')
