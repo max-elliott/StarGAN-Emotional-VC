@@ -23,6 +23,11 @@ import model
 # import data_loader
 from logger import Logger
 
+import sklearn
+from sklearn.metrics import f1_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import recall_score
+
 
 class Solver(object):
 
@@ -117,19 +122,18 @@ class Solver(object):
             spk_labels = labels[:,1].to(device = self.device)
 
             # Generate target domain labels randomly.
-            print('Making random emotion targets')
             num_emos = 4
             emo_targets = self.make_random_labels(num_emos, emo_labels.size(0))
             emo_targets = emo_targets.to(device = self.device)
 
             # one-hot versions of labels
-            emo_labels_ones = F.one_hot(emo_labels, num_classes = 4).float()
-            emo_targets_ones = F.one_hot(emo_targets, num_classes = 4).float()
+            emo_labels_ones = F.one_hot(emo_labels, num_classes = 4).float().to(device = self.device)
+            emo_targets_ones = F.one_hot(emo_targets, num_classes = 4).float().to(device = self.device)
 
             #############################################################
             #                    TRAIN CLASSIFIERS                      #
             #############################################################
-            print('Training Classifiers.')
+            print('Training Classifiers...')
             self.model.reset_grad()
             ce_loss_fn = nn.CrossEntropyLoss()
 
@@ -146,7 +150,7 @@ class Solver(object):
             #############################################################
             #                    TRAIN DISCRIMINATOR                    #
             #############################################################
-            print('Training Discriminator.')
+            print('Training Discriminator...')
             self.model.reset_grad()
 
             # Get results for x_fake
@@ -170,7 +174,7 @@ class Solver(object):
             #                      TRAIN GENERATOR                      #
             #############################################################
             if i % self.d_to_g_ratio == 0:
-                print('Training Generators.')
+                print('Training Generator...')
 
                 self.model.reset_grad()
 
@@ -207,6 +211,9 @@ class Solver(object):
             #############################################################
             #                  PRINTING/LOGGING/SAVING                  #
             #############################################################
+            elapsed = datetime.now() - start_time
+            print('{} elapsed. Iteration {:04} complete'.format(elapsed, i))
+
             if i % self.log_every == 0:
                 loss = {}
                 loss['C/emo_real_loss'] = c_emo_real_loss.item()
@@ -219,14 +226,8 @@ class Solver(object):
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()
 
-                elapsed = datetime.now() - start_time
-
-                print('{} elapsed. Iteration {:04} complete'.format(elapsed, i))
-
                 for name, val in loss.items():
                     print("{:20} = {:.4f}".format(name, val))
-
-                print(str)
 
                 if self.use_tensorboard:
                     for tag, value in loss.items():
@@ -242,11 +243,85 @@ class Solver(object):
 
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                filler_var = 1
-                print("Will sample here.")
+                self.test()
+                # filler_var = 1
+                # print("Will sample here.")
 
             # update learning rates
             self.update_lr(i)
+
+    def test(self):
+
+        # test_iter = iter(self.test_loader)
+        print("Sampling with generator...")
+        self.model.set_eval_mode()
+
+        fake_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
+        id_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
+        cycle_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
+
+        total_labels = torch.rand(0).to(device = self.device, dtype = torch.long)
+        total_targets = torch.rand(0).to(device = self.device, dtype = torch.long)
+
+        for i, (x, labels) in enumerate(self.test_loader):
+
+            x_real = x[0].to(device = self.device)
+            x_lens = x[1].to(device = self.device)
+
+            x_real = x_real.unsqueeze(1)
+
+            emo_labels = labels[:,0].to(device = self.device)
+            spk_labels = labels[:,1].to(device = self.device)
+
+            # Generate target domain labels randomly.
+            num_emos = 4
+            emo_targets = self.make_random_labels(num_emos, emo_labels.size(0))
+            emo_targets = emo_targets.to(device = self.device)
+
+            # one-hot versions of labels
+            emo_labels_ones = F.one_hot(emo_labels, num_classes = 4).float().to(device = self.device)
+            emo_targets_ones = F.one_hot(emo_targets, num_classes = 4).float().to(device = self.device)
+
+            with torch.no_grad():
+
+                x_fake = self.model.G(x_real, emo_targets_ones)
+                x_id = self.model.G(x_real, emo_labels_ones)
+                x_cycle = self.model.G(x_fake, emo_labels_ones)
+
+                new_lens = x_lens #;;; needs doing
+
+                c_emo_fake = self.model.emo_cls(x_fake, x_lens)
+                c_emo_id = self.model.emo_cls(x_id, x_lens)
+                c_emo_cycle = self.model.emo_cls(x_cycle, x_lens)
+
+                c_emo_fake = torch.max(c_emo_fake, dim = 1)[1]
+                c_emo_id = torch.max(c_emo_id, dim = 1)[1]
+                c_emo_cycle = torch.max(c_emo_cycle, dim = 1)[1]
+
+                # D as well
+
+                fake_preds = torch.cat((fake_preds, c_emo_fake), dim=0)
+                id_preds = torch.cat((id_preds, c_emo_id), dim=0)
+                cycle_preds = torch.cat((cycle_preds, c_emo_cycle), dim=0)
+
+                total_labels = torch.cat((total_labels, emo_labels), dim=0)
+                total_targets = torch.cat((total_targets, emo_targets), dim=0)
+
+            #Save some samples
+            # audio_utils.
+
+        accuracy_fake = accuracy_score(total_targets, fake_preds)
+        accuracy_id = accuracy_score(total_labels, id_preds)
+        accuracy_cycle = accuracy_score(total_labels, cycle_preds)
+
+        l = ["Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
+
+        print('{:20} = {:.3f}'.format(l[0], accuracy_fake))
+        print('{:20} = {:.3f}'.format(l[1], accuracy_id))
+        print('{:20} = {:.3f}'.format(l[2], accuracy_cycle))
+
+
+
 
 
     def update_lr(self, i):
@@ -290,9 +365,8 @@ class Solver(object):
         # Compute loss for gradient penalty.
         alpha = torch.rand(x_real.size(0), 1, 1, 1).to(self.device)
         x_hat = (alpha * x_real.data + (1 - alpha) * x_fake.data).requires_grad_(True)
-        print("x_hat size: ", x_hat.size())
+        # print("x_hat size: ", x_hat.size())
         out_src = self.model.D(x_hat, targets)
-
 
         weight = torch.ones(out_src.size()).to(self.device)
         dydx = torch.autograd.grad(outputs=out_src,
@@ -331,24 +405,32 @@ if __name__ == '__main__':
 
     names, mels, labels = data_preprocessing.load_session_data(1)
 
-    print("Number mels: ", len(mels))
+    print("Number mels: ", len(mels), len(labels))
 
     mels = [m.t() for m in mels]
 
 
     mels, labels = data_loader.crop_sequences(mels, labels, 300)
 
-    mels = torch.stack(mels)
-    labels = torch.stack(labels)
-    print(labels.size())
-    print(mels.size())
+    print("Number cropped mels: ", len(mels), len(labels))
+
+    # mels = torch.stack(mels)
+    # labels = torch.stack(labels)
+    # print(labels.size())
+    # print(mels.size())
 
     # print(mels.size())
-    batch_size = 2
+    batch_size = config['model']['batch_size']
     train_loader, test_loader = data_loader.make_variable_dataloader(mels, labels,
-                                                    batch_size = batch_size)
-    # print("test")
-    s = Solver(train_loader,test_loader, 'DebugModel', config)
+                                batch_size = batch_size,
+                                train_test_split = config['model']['train_test_split'])
+
+    # print("Train loader size = {}".format(train_loader.__len__()))
+    # print("Test loader size = {}".format(test_loader.__len__()))
+
+
+
+    s = Solver(train_loader, test_loader, 'DebugModel', config)
     s.train()
 
 

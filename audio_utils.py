@@ -1,12 +1,17 @@
 from IPython.display import Audio
 from scipy.io import wavfile
 import os
+import yaml
+import copy
+
 import librosa
 import librosa.display
+
 import numpy as np
+
 import torch
 import torch.nn as nn
-import copy
+
 import matplotlib.pyplot as plt
 
 
@@ -26,6 +31,10 @@ class hyperparams(object):
         self.n_iter = 100 # Number of inversion iterations
         self.use_log_magnitude = True # if False, use magnitude
         self.preemph = 0.97
+
+        self.config = yaml.load(open('./config.yaml', 'r'))
+        self.sample_dir = self.config['logs']['sample_dir']
+
 
 hp = hyperparams()
 
@@ -128,14 +137,36 @@ def plot_spec(spec, type = 'mel'):
     plt.figure(figsize=(6, 4))
 
     if isinstance(spec, torch.Tensor):
-        spec = spec .numpy()
+        spec = spec.numpy()
     librosa.display.specshow(spec, y_axis=type, sr=hp.sr, hop_length=hp.hop_length,
                                                     fmin=None, fmax=4000)
     plt.colorbar(format='%+2.0f dB')
     plt.title('Power spectrogram')
     plt.show()
 
+def save_spec(spec, model_name, filename, type = 'mel'):
+
+    fig = plt.figure(figsize=(6,4))
+
+    if isinstance(spec, torch.Tensor):
+        spec = spec.numpy()
+
+    librosa.display.specshow(spec, y_axis=type, sr=hp.sr, hop_length=hp.hop_length,
+                                                    fmin=None, fmax=4000)
+    plt.colorbar(format='%+2.0f dB')
+    plt.title('Power spectrogram')
+
+    path = os.path.join(hp.sample_dir, model_name)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    path = os.path.join(directory, filename)
+
+    plt.savefig(path)
+    plt.close(fig)
+
 if __name__ == '__main__':
-    
+
     files = librosa.util.find_files("/Users/Max/MScProject/datasets/test_dir")
     print(files)

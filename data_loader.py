@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.utils.data as data_utils
 import torch.nn.functional as F
 
+import random
+
 import numpy as np
 
 class variable_length_dataset(data_utils.Dataset):
@@ -47,16 +49,21 @@ class variable_length_dataset(data_utils.Dataset):
         return [sequences_padded, lengths], targets
 
 def make_variable_dataloader(x, y, batch_size = 64, train_test_split = 0.9):
-    split_index = int(len(x)*0.9)
+
+    split_index = int(len(x)*train_test_split)
+
+    print(split_index)
+
+    x, y = _shuffle_data(x, y)
 
     train_dataset = variable_length_dataset(x[:split_index], y[:split_index])
     test_dataset = variable_length_dataset(x[split_index:], y[split_index:])
     train_loader = data_utils.DataLoader(train_dataset, batch_size = batch_size,
                                          collate_fn = train_dataset.collate_length_order,
                                          num_workers = 4, shuffle = True)
-    test_loader = data_utils.DataLoader(test_dataset, batch_size = batch_size,
+    test_loader = data_utils.DataLoader(test_dataset, batch_size = batch_size//4,
                                          collate_fn = test_dataset.collate_length_order,
-                                         num_workers = 4, shuffle = True)
+                                         num_workers = 4, shuffle = False)
 
     return train_loader, test_loader
 
@@ -64,16 +71,32 @@ def make_dataloader(x, y, batch_size = 64, split = 0.9):
 
     split_index = int(len(x)*split)
 
+    x, y = _shuffle_data(x, y)
+
     train_dataset = data_utils.TensorDataset(x[:split_index], y[:split_index])
     test_dataset = data_utils.TensorDataset(x[split_index:], y[split_index:])
     train_loader = data_utils.DataLoader(train_dataset, batch_size = batch_size,
                                          num_workers = 4, shuffle = True)
     test_loader = data_utils.DataLoader(test_dataset, batch_size = batch_size,
-                                         num_workers = 4, shuffle = True)
+                                         num_workers = 4, shuffle = False)
 
     return train_loader, test_loader
 
-def pad_sequence(seq, length, pad_value = 0):
+def _shuffle_data(mels, labels):
+
+    indices = list(range(len(mels)))
+    random.shuffle(indices)
+
+    shuffled_mels = []
+    shuffled_labels = []
+
+    for i in indices:
+        shuffled_mels.append(mels[i])
+        shuffled_labels.append(labels[i])
+
+    return shuffled_mels, shuffled_labels
+
+def _pad_sequence(seq, length, pad_value = 0):
     new_seq = torch.zeros((length,seq.size(1)))
     new_seq[:seq.size(0), :] = seq
 
@@ -102,7 +125,7 @@ def crop_sequences(seq_list, labels, segment_len):
 
         if seq.size(0) > segment_len//2:
 
-            new_seq = pad_sequence(seq, segment_len)
+            new_seq = _pad_sequence(seq, segment_len)
             new_seqs.append(new_seq)
             new_labels.append(labels[i])
 
