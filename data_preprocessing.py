@@ -248,41 +248,41 @@ def load_session_data(session_num, directory= dataset_dir + "/Processed_data"):
 
 if __name__ == "__main__":
 
-    for i in range(1,2):
-
-        ses_number = str(i)
-
-        session_dir = dataset_dir + "/Session" + ses_number
-
-        filenames, mels, specs, labels = get_session_data(session_dir, exclude_unlabelled = True)
-
-        # print(len(mels))
-        save_data(filenames, dataset_dir + '/Processed_data/filenames' + ses_number)
-        save_data(mels, dataset_dir + '/Processed_data/melspecs' + ses_number)
-        save_data(specs, dataset_dir + '/Processed_data/specs' + ses_number)
-        save_data(labels, dataset_dir + '/Processed_data/labels' + ses_number)
-        # save_data(conts, dataset_dir + '/Processed_data/conts' + ses_number)
-        # save_data(conts_dis, dataset_dir + '/Processed_data/conts_dis' + ses_number)
-        # save_data(speakers, dataset_dir + '/Processed_data/speakers' + ses_number)
-        print('Done ' + ses_number + ".")
-
-    print(len(mels), len(labels), labels[0].size())
+    # for i in range(1,2):
+    #
+    #     ses_number = str(i)
+    #
+    #     session_dir = dataset_dir + "/Session" + ses_number
+    #
+    #     filenames, mels, specs, labels = get_session_data(session_dir, exclude_unlabelled = True)
+    #
+    #     # print(len(mels))
+    #     save_data(filenames, dataset_dir + '/Processed_data/filenames' + ses_number)
+    #     save_data(mels, dataset_dir + '/Processed_data/melspecs' + ses_number)
+    #     save_data(specs, dataset_dir + '/Processed_data/specs' + ses_number)
+    #     save_data(labels, dataset_dir + '/Processed_data/labels' + ses_number)
+    #     print('Done ' + ses_number + ".")
+    #
+    # print(len(mels), len(labels), labels[0].size())
 
     # print(concatenate_labels(1,2,[3,4,5],[6,7,8]))
 
-    # wav = get_wav_and_labels("Ses01F_impro03_F001.wav", dataset_dir + "/Session1")[0]
+    wav, label = get_wav_and_labels("Ses02F_impro03_F002.wav", dataset_dir + "/Session2")
     # # wav2 = get_wav_and_labels("Ses01F_impro03_F002.wav", dataset_dir + "/Session1")[0]
     #
-    # spec = audio_utils.wav2spectrogram(wav)
+    spec = audio_utils.wav2spectrogram(wav)
     # # spec2 = audio_utils.wav2spectrogram(wav2)
     # print(spec.shape)
     # # print(spec2.shape)
-    # audio_utils.plot_spec(spec, type = 'log')
+    audio_utils.plot_spec(spec, type = 'log')
     # #
-    # melspec = audio_utils.spectrogram2melspectrogram(spec)
+    melspec = audio_utils.spectrogram2melspectrogram(spec)
     # print(melspec.shape)
-    # audio_utils.plot_spec(melspec)
+    audio_utils.plot_spec(melspec)
     #
+    fn = str(label[0].item()) + 'to' + '2-' + str(label[1].item()) + '.png'
+
+    audio_utils.save_spec(melspec, "Test", fn)
     # reproduced = audio_utils.spectrogram2wav(spec)
     #
     # audio_utils.save_wav(reproduced, "/Users/Max/MScProject/datasets/Produced/test1.wav")

@@ -314,6 +314,8 @@ class Solver(object):
         accuracy_id = accuracy_score(total_labels, id_preds)
         accuracy_cycle = accuracy_score(total_labels, cycle_preds)
 
+
+
         l = ["Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
 
         print('{:20} = {:.3f}'.format(l[0], accuracy_fake))

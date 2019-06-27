@@ -161,12 +161,13 @@ def save_spec(spec, model_name, filename, type = 'mel'):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    path = os.path.join(directory, filename)
+    path = os.path.join(path, filename)
 
     plt.savefig(path)
     plt.close(fig)
+    print("Saved.")
 
 if __name__ == '__main__':
 
     files = librosa.util.find_files("/Users/Max/MScProject/datasets/test_dir")
-    print(files)
+    print(files[0])
