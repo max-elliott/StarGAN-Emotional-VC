@@ -22,6 +22,7 @@ import audio_utils
 import model
 # import data_loader
 from logger import Logger
+from sample_set import Sample_Set
 
 import sklearn
 from sklearn.metrics import f1_score
@@ -35,6 +36,7 @@ class Solver(object):
 
         self.train_loader = train_loader
         self.test_loader = test_loader
+        self.sample_set = Sample_Set(config)
         self.config = config
 
         # These are the INITIAL lr's. They are updated within the optimizers
@@ -53,6 +55,7 @@ class Solver(object):
         self.num_iters = config['loss']['num_iters']
         self.num_iters_decay = config['loss']['num_iters_decay']
         self.resume_iters = config['loss']['resume_iters']
+        self.current_iter = self.resume_iters
 
         # Number of D/emo_cls updates for each G update
         self.d_to_g_ratio = config['loss']['d_to_g_ratio']
@@ -90,6 +93,7 @@ class Solver(object):
         print('################ BEGIN TRAINING LOOP ################')
 
         start_iter = self.resume_iters + 1 # == 1 if new model
+
         self.update_lr(start_iter)
 
         # norm = Normalizer() #-------- ;;;WHAT DO I DO HERE ---------#
@@ -105,6 +109,8 @@ class Solver(object):
             print("Iteration {:02} lr = {:.6f}".format(i, self.model.d_optimizer.param_groups[0]['lr']))
             self.model.to_device(device = self.device)
             self.model.set_train_mode()
+
+            self.current_iter = i
 
             # Get data from data loader
             print('Getting mini-batch.')
@@ -237,13 +243,13 @@ class Solver(object):
 
             # save checkpoint
             if i % self.model_save_every == 0:
-                self.model.save(save_dir = self.model_save_dir, iter = i)
+                self.model.save(save_dir = self.model_save_dir, iter = self.current_iter)
             else:
                 print("No model saved this iteration.")
 
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                self.test()
+                self.test(self.current_iter)
                 # filler_var = 1
                 # print("Will sample here.")
 
@@ -307,20 +313,56 @@ class Solver(object):
                 total_labels = torch.cat((total_labels, emo_labels), dim=0)
                 total_targets = torch.cat((total_targets, emo_targets), dim=0)
 
-            #Save some samples
-            # audio_utils.
-
         accuracy_fake = accuracy_score(total_targets, fake_preds)
         accuracy_id = accuracy_score(total_labels, id_preds)
         accuracy_cycle = accuracy_score(total_labels, cycle_preds)
-
-
 
         l = ["Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
 
         print('{:20} = {:.3f}'.format(l[0], accuracy_fake))
         print('{:20} = {:.3f}'.format(l[1], accuracy_id))
         print('{:20} = {:.3f}'.format(l[2], accuracy_cycle))
+
+        if self.use_tensorboard:
+            self.logger.scalar_summary("test_accuracy_fake", accuracy_fake, self.current_iter)
+            self.logger.scalar_summary("test_accuracy_id", accuracy_id, self.current_iter)
+            self.logger.scalar_summary("test_accuracy_cycle", accuracy_cycle, self.current_iter)
+
+    def sample_at_training(self):
+        '''
+        Passes each performance sample through G for every target emotion. They
+        are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png'
+        '''
+
+        print("Saving samples...")
+
+        self.model.to_device(device = self.device)
+        self.model.set_eval_mode()
+
+        # Make one-hot vector for each emotion category
+        emo_labels = torch.Tensor([0,1,2,3]).long()
+        emo_targets = F.one_hot(emo_labels, num_classes = 4).float().to(device = self.device)
+
+        for tag, val in self.sample_set.get_set().items():
+            # tag is filename, val is [mel, labels, spec]
+            mel = val[0].unsqueeze(0).unsqueeze(0).to(device = self.device)
+            labels = val[1]
+
+            with torch.no_grad():
+                # print(emo_targets)
+                for i in range (0, emo_targets.size(0)):
+
+                    fake = self.model.G(mel, emo_targets[i].unsqueeze(0))
+
+                    filename =  tag[0:-4] + "-" + str(int(labels[0].item())) + "to" + \
+                                str(emo_labels[i].item()) + '-i=' +\
+                                str(self.current_iter) + ".png"
+
+                    fake = fake.squeeze()
+                    audio_utils.save_spec_plot(fake.t(), self.model_name, filename)
+
+
+
 
 
 
@@ -433,7 +475,12 @@ if __name__ == '__main__':
 
 
     s = Solver(train_loader, test_loader, 'DebugModel', config)
-    s.train()
+    # s.train()
+
+    for tag, val in s.sample_set.get_set().items():
+        print(tag, val[0].size())
+
+    s.sample_at_training()
 
 
     # data_iter = iter(train_loader)

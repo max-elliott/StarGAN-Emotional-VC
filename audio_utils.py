@@ -144,8 +144,12 @@ def plot_spec(spec, type = 'mel'):
     plt.title('Power spectrogram')
     plt.show()
 
-def save_spec(spec, model_name, filename, type = 'mel'):
-
+def save_spec_plot(spec, model_name, filename, type = 'mel'):
+    '''
+    spec: [n_feats, seq_len] - np.array or torch.Tensor
+    model_name: str - just the basename, no directory
+    filename: str
+    '''
     fig = plt.figure(figsize=(6,4))
 
     if isinstance(spec, torch.Tensor):

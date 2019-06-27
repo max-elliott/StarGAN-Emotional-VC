@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import audio_utils
 import pickle
+import yaml
 
 # ./google-cloud-sdk/bin/gcloud compute ssh --project mscproject1 --zone europe-west4-a pytorch-1-1-vm -- -L 8080:localhost:8080
 # zipped wav data at https://storage.googleapis.com/emo-vc-storage/IEMOCAP.zip
@@ -108,6 +109,37 @@ def concatenate_labels(emo, speaker, dims, dims_dis):
 
 
     return all_labels
+
+def get_samples_and_labels(filename):
+
+    config = yaml.load(open('./config.yaml', 'r'))
+
+
+    wav_path = config['data']['dataset_dir'] + '/All/' + filename
+    folder = filename[:-9]
+    label_path = config['data']['dataset_dir'] + "/All/Annotations/" + folder + ".txt"
+
+    with open(label_path, 'r') as label_file:
+
+        category = ""
+        dimensions = ""
+        speaker = ""
+
+        for row in label_file:
+            if row[0] == '[':
+                split = row.split("\t")
+                if split[1] == filename[:-4]:
+                    category = get_emotion_from_label(split[2])
+                    dimensions = cont2list(split[3])
+                    dimensions_dis = cont2list(split[3], binned = True)
+                    speaker = get_speaker_from_filename(filename)
+
+
+    audio = audio_utils.load_wav(wav_path)
+    audio = np.array(audio, dtype = np.float32)
+    labels = concatenate_labels(category, speaker, dimensions, dimensions_dis)
+
+    return audio, labels
 
 def get_wav_and_labels(filename, session_dir):
 

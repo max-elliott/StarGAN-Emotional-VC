@@ -1,6 +1,6 @@
 model:
 
-      name: "DebugModel"
+      name: "SampleTest"
       num_feats: 128
       batch_size: 4
       train_test_split: 0.999
@@ -42,6 +42,11 @@ logs:
     log_every: 2
     sample_every: 1
     model_save_every: 2
+
+data:
+
+    dataset_dir: "/Users/Max/MScProject/datasets/IEMOCAP"
+    sample_set_dir: './samples/originals'
 
 verbose: False
 device: torch.device('cpu')
