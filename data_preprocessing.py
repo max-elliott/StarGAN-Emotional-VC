@@ -189,8 +189,7 @@ def get_session_data(data_dir, exclude_unlabelled = True):
             for filename in os.listdir(data_dir + "/" + foldername):
 
                 if not filename == ".DS_Store":
-                    wav, labels = get_wav_and_labels(filename,
-                                                                    data_dir)
+                    wav, labels = get_wav_and_labels(filename,data_dir)
 
                     if not (exclude_unlabelled and labels[0] == -1): #ignore some rare emotions
                         mel = audio_utils.wav2melspectrogram(wav)

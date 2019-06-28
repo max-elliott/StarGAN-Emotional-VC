@@ -1,9 +1,11 @@
 model:
 
-      name: "SampleTest"
+      name: "LoggerTest"
       num_feats: 128
       batch_size: 4
       train_test_split: 0.999
+      use_c_speaker: True
+      use_c_dimension: True
 
 
 loss:
@@ -33,14 +35,14 @@ optimizer:
 
 logs:
 
-    use_tensorboard: False
+    use_tensorboard: True
 
     log_dir: './logs'
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
     log_every: 2
-    sample_every: 1
+    sample_every: 2
     model_save_every: 2
 
 data:

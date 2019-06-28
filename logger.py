@@ -3,15 +3,22 @@ Written by hujinsen. Original source can be found at:
     https://github.com/hujinsen/pytorch-StarGAN-VC
     Doesn't currently work
 '''
-# import tensorflow as tf
+import tensorflow as tf
+
+import os
 
 
 class Logger(object):
     """Tensorboard logger."""
 
-    def __init__(self, log_dir):
+    def __init__(self, log_dir, model_name):
         """Initialize summary writer."""
-        # self.writer = tf.summary.FileWriter(log_dir)
+
+        file_dir = os.path.join(log_dir, model_name)
+        if not os.path.exists(file_dir):
+            os.mkdir(file_dir)
+
+        self.writer = tf.summary.FileWriter(file_dir)
         print("Made logger.")
 
     def scalar_summary(self, tag, value, step):

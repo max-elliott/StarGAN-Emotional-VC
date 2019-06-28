@@ -26,7 +26,7 @@ class hyperparams(object):
         self.frame_length = 0.05 # seconds
         self.hop_length = int(self.sr*self.frame_shift) # samples  This is dependent on the frame_shift.
         self.win_length = int(self.sr*self.frame_length) # samples This is dependent on the frame_length.
-        self.n_mels = 128 # Number of Mel banks to generate
+        self.n_mels = 80 # Number of Mel banks to generate
         self.power = 1.2 # Exponent for amplifying the predicted magnitude
         self.n_iter = 100 # Number of inversion iterations
         self.use_log_magnitude = True # if False, use magnitude
@@ -143,6 +143,28 @@ def plot_spec(spec, type = 'mel'):
     plt.colorbar(format='%+2.0f dB')
     plt.title('Power spectrogram')
     plt.show()
+
+def save_spec(spec, model_name, filename, type = 'mel'):
+    '''
+    spec: [n_feats, seq_len] - np.array or torch.Tensor
+    model_name: str - just the basename, no directory
+    filename: str
+    '''
+    fig = plt.figure(figsize=(6,4))
+
+    if isinstance(spec, torch.Tensor):
+        spec = spec.numpy()
+
+    path = os.path.join(hp.sample_dir, model_name)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    path = os.path.join(path, filename)
+
+    np.save(path, spec)
+
+    print("Saved.")
 
 def save_spec_plot(spec, model_name, filename, type = 'mel'):
     '''

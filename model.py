@@ -21,6 +21,9 @@ class StarGAN_emo_VC1(object):
         self.config = config
         self.save_dir = config['logs']['model_save_dir']
         self.name = name
+        self.use_speaker = config['model']['use_c_speaker']
+        self.use_dimension = config['model']['use_c_dimension']
+
         # Need completing
 
         self.build_model()
@@ -30,24 +33,32 @@ class StarGAN_emo_VC1(object):
         self.G.train()
         self.D.train()
         self.emo_cls.train()
-        # self.speaker_cls.train()
-        # self.dimension_cls.train()
+
+        if self.use_speaker:
+            self.speaker_cls.train()
+        if self.use_dimension:
+            self.dimension_cls.train()
 
     def set_eval_mode(self):
         self.G.eval()
         self.D.eval()
         self.emo_cls.eval()
-        # self.speaker_cls.eval()
-        # self.dimension_cls.eval()
+
+        if self.use_speaker:
+            self.speaker_cls.eval()
+        if self.use_dimension:
+            self.dimension_cls.eval()
 
     def to_device(self, device = torch.device('cuda')):
         if torch.cuda.is_available():
             self.G.to(device = device)
             self.D.to(device = device)
             self.emo_cls.to(device = device)
-            self.emo_cls.device = device
-            # self.speaker_cls.to(device = device)
-            # self.dimension_cls.to(device = device)
+            # self.emo_cls.device = device
+            if self.use_speaker:
+                self.speaker_cls.to(device = device)
+            if self.use_dimension:
+                self.dimension_cls.to(device = device)
         else:
             print("Device not available")
 
@@ -65,13 +76,20 @@ class StarGAN_emo_VC1(object):
         self.G = Generator()
         self.D = Discriminator()
         self.emo_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
-                                          self.num_layers, self.num_emotions,
-                                          bi = self.bi)
-        # self.speaker_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
-        #                                   self.num_layers, self.num_speakers,
-        #                                   bi = self.bi)
-        # self.dimension_cls = Dimension_Classifier(self.num_input_feats, self.hidden_size,
-        #                                   self.num_layers, bi = self.bi)
+                                                    self.num_layers,
+                                                    self.num_emotions,
+                                                    bi = self.bi)
+        if self.use_speaker:
+            self.speaker_cls = Emotion_Classifier(self.num_input_feats,
+                                                    self.hidden_size,
+                                                    self.num_layers,
+                                                    self.num_speakers,
+                                                    bi = self.bi)
+        if self.use_dimension:
+            self.dimension_cls = Dimension_Classifier(self.num_input_feats,
+                                                    self.hidden_size,
+                                                    self.num_layers,
+                                                    bi = self.bi)
 
         print("Building optimizers")
 
@@ -79,19 +97,25 @@ class StarGAN_emo_VC1(object):
         self.g_optimizer = torch.optim.Adam(self.G.parameters(), con_opt['g_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.d_optimizer = torch.optim.Adam(self.D.parameters(), con_opt['d_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
-        # self.speaker_cls_optimizer = torch.optim.Adam(self.speaker_cls.parameters(), con_opt['speaker_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
-        # self.dim_cls_optimizer = torch.optim.Adam(self.dim_cls.parameters(), config.dim_cls_lr,[config.beta1, config.beta2])
+        if self.use_speaker:
+            self.speaker_cls_optimizer = torch.optim.Adam(self.speaker_cls.parameters(), con_opt['speaker_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
+        if self.use_dimension:
+            self.dimension_cls_optimizer = torch.optim.Adam(self.dimension_cls.parameters(), con_opt['dim_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
 
         if self.config['verbose']:
             print("Network parameter list:")
-
+            total = 0
             G_count = self.print_network(self.G, 'G')
             D_count = self.print_network(self.D, 'D')
-            emo_count = self.print_network(self.emo_cls, 'Emotion Classifier')
-            # self.print_network(self.speaker_cls, 'Speaker Classifier')
-            # self.print_network(self.dim_cls, 'Dimensional Emotions Classifier')
+            emo_count = self.print_network(self.emo_cls, 'C_emotion')
+            if self.use_speaker:
+                spk_count = self.print_network(self.speaker_cls, 'C_Speaker')
+                total += spk_count
+            if self.use_dimension:
+                dim_count = self.print_network(self.dim_cls, 'C_Dimensional')
+                total += dim_count
 
-            total = G_count + D_count + emo_count
+            total += G_count + D_count + emo_count
 
             print("TOTAL NUMBER OF PARAMETERS = {}".format(total))
 
@@ -112,8 +136,10 @@ class StarGAN_emo_VC1(object):
         self.g_optimizer.zero_grad()
         self.d_optimizer.zero_grad()
         self.emo_cls_optimizer.zero_grad()
-        # self.speaker_cls_optimizer.zero_grad()
-        # self.dim_cls_optimizer.zero_grad()
+        if self.use_speaker:
+            self.speaker_cls_optimizer.zero_grad()
+        if self.use_dimension:
+            self.dimension_cls_optimizer.zero_grad()
 
     def save(self, save_dir = None, iter = 0):
 
@@ -131,6 +157,12 @@ class StarGAN_emo_VC1(object):
                  'g_opt': self.g_optimizer.state_dict(),
                  'emo_opt': self.emo_cls_optimizer.state_dict(),
                 }
+        if self.use_speaker:
+            state['spk'] = self.speaker_cls.state_dict()
+            state['spk_opt'] = self.speaker_cls_optimizer.state_dict()
+        if self.use_dimension:
+            state['dim'] = self.dimension_cls.state_dict()
+            state['dim_opt'] = self.dimension_cls_cls_optimizer.state_dict()
 
         path = os.path.join(path, "{:05}.ckpt".format(iter))
 
@@ -138,7 +170,7 @@ class StarGAN_emo_VC1(object):
         # torch.save(self.G.state_dict(), G_path)
         # torch.save(self.emo_cls.state_dict(), emo_path)
 
-        print("Saved model as {}.".format(path))
+        print("Model saved as {}.".format(path))
 
     def load(self, load_dir, iter):
 
@@ -163,32 +195,20 @@ class StarGAN_emo_VC1(object):
         self.g_optimizer.load_state_dict(dictionary['g_opt'])
         self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'])
 
-        print("Model and optimizers loaded.")
+        if 'spk' in dictionary:
+            self.speaker_cls.load_state_dict(dictionary['spk'])
+            self.speaker_cls_optimizer.load_state_dict(dictionary['spk_opt'])
+            self.use_speaker = True
+        else:
+            self.use_speaker = False
+        if 'dim' in dictionary:
+            self.dimension_cls.load_state_dict(dictionary['dim'])
+            self.dimension_cls_optimizer.load_state_dict(dictionary['dim_opt'])
+            self.use_dimension = True
+        else:
+            self.use_dimension = False
 
-    # def foward(self, x, c_new, c_original):
-    #     '''
-    #     Can't actually do this properly in a class, move to solver.
-    #     Needs to:
-    #         - update D more often than G (GAN theory)
-    #         - split x_g_mels into segments for classification (unless it can be
-    #           done with variable sequence lengths)
-    #     '''
-    #     # pass through generator to get x' = x_g
-    #     x_g = self.G(x,c_new)
-    #
-    #     # Convert x to mel, NEED A BATCH VERSION
-    #     x_g_mels = audio_utils.spectrogram2melspectrogram(x_g)
-    #
-    #     # for reconstruction to make x_rec
-    #     x_rec = self.G(x_g_mels, c_original)
-    #
-    #     # get D_real, D_emo, D_spk, D_dim
-    #     y_real = self.D(x_g_mels, c_new)
-    #     y_emo = self.emo_cls(x_g_mels)
-    #     y_spk = self.speaker_cls(x_g_mels)
-    #     y_dim = self.dimension_cls(x_g_mels)
-    #
-    #     return x_rec, y_real, y_emo, y_spk, y_dim
+        print("Model and optimizers loaded.")
 
 class Down2d(nn.Module):
     """docstring for Down2d."""
@@ -374,11 +394,11 @@ if __name__ == '__main__':
 
     model = StarGAN_emo_VC1(config, "NewTest")
     # print(model.name)
-    load_dir = './checkpoints/NewTest/'
+    # load_dir = './checkpoints/NewTest/'
 
     # model.load(load_dir, 4)
 
-    # print(model.name)
+    print(model.name)
 
     # model.save(iter = 4)
-    model.load(load_dir, 4)
+    # model.load(load_dir, 4)

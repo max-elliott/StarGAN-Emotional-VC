@@ -72,7 +72,7 @@ class Solver(object):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         if self.use_tensorboard:
-            self.logger = Logger(config['logs']['log_dir'])
+            self.logger = Logger(config['logs']['log_dir'], model_name)
 
         self.model_name = model_name
         self.model = model.StarGAN_emo_VC1(config, model_name)
@@ -150,6 +150,29 @@ class Solver(object):
 
             c_emo_real_loss.backward()
             self.model.emo_cls_optimizer.step()
+
+            ####### ;;;;;;;;;;;; DO THIS
+            if self.model.use_speaker:
+                self.model.reset_grad()
+
+                # Train with x_real
+                preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
+
+                c_speaker_real_loss = ce_loss_fn(preds_speaker_real, emo_labels)
+
+                c_speaker_real_loss.backward()
+                self.model.speaker_cls_optimizer.step()
+            if self.model.use_dimension:
+                self.model.reset_grad()
+
+                # Train with x_real
+                preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
+
+                c_dimension_real_loss = ce_loss_fn(preds_dimension_real, emo_labels)
+
+                c_speaker_real_loss.backward()
+                self.model.speaker_cls_optimizer.step()
+
 
             # repeat above for other classifiers when implemented
 
@@ -249,12 +272,13 @@ class Solver(object):
 
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                self.test(self.current_iter)
+                self.test()
                 # filler_var = 1
                 # print("Will sample here.")
 
             # update learning rates
             self.update_lr(i)
+
 
     def test(self):
 
@@ -354,12 +378,17 @@ class Solver(object):
 
                     fake = self.model.G(mel, emo_targets[i].unsqueeze(0))
 
-                    filename =  tag[0:-4] + "-" + str(int(labels[0].item())) + "to" + \
-                                str(emo_labels[i].item()) + '-i=' +\
+                    filename_png =  tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+                                str(emo_labels[i].item()) + '_i=' +\
                                 str(self.current_iter) + ".png"
+
+                    filename_npy =  tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+                                str(emo_labels[i].item()) + '_i=' +\
+                                str(self.current_iter) + ".npy"
 
                     fake = fake.squeeze()
                     audio_utils.save_spec_plot(fake.t(), self.model_name, filename)
+                    audio_utils.save_spec(fake.t(), self.model_name, filename)
 
 
 
@@ -475,12 +504,12 @@ if __name__ == '__main__':
 
 
     s = Solver(train_loader, test_loader, 'DebugModel', config)
-    # s.train()
+    s.train()
 
-    for tag, val in s.sample_set.get_set().items():
-        print(tag, val[0].size())
-
-    s.sample_at_training()
+    # for tag, val in s.sample_set.get_set().items():
+    #     print(tag, val[0].size())
+    #
+    # s.sample_at_training()
 
 
     # data_iter = iter(train_loader)
