@@ -21,8 +21,8 @@ class StarGAN_emo_VC1(object):
         self.config = config
         self.save_dir = config['logs']['model_save_dir']
         self.name = name
-        self.use_speaker = config['model']['use_c_speaker']
-        self.use_dimension = config['model']['use_c_dimension']
+        self.use_speaker = config['model']['use_speaker']
+        self.use_dimension = config['model']['use_dimension']
 
         # Need completing
 

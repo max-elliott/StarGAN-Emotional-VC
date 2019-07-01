@@ -4,14 +4,16 @@ model:
       num_feats: 128
       batch_size: 4
       train_test_split: 0.999
-      use_c_speaker: True
-      use_c_dimension: True
+      use_speaker: False
+      use_dimension: False
 
 
 loss:
 
     lambda_gp: 10
     lambda_g_emo_cls: 1
+    lambda_g_spk_cls: 1
+    lambda_g_dim_cls: 1
     lambda_cycle: 1
     lambda_id: 1
 

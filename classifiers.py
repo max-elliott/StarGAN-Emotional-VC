@@ -135,15 +135,12 @@ class Dimension_Classifier(nn.Module):
                         num_layers = self.num_layers,
                         bi = bi, device = device)
 
-    def forward(self, x):
+    def forward(self, x_data, x_lens):
         '''
         x[0] is size (batch_size, max_seq_length, feature_dim)
         x[1] is size (batch_size, 1), contains seq_lens
         batch is in descending seq_len order
         '''
-        x_data = x[0]
-#         print(x_data.size())
-        x_lens = x[1]
 
         batch_size = x_data.size(0)
         no_features = x_data.size(2)

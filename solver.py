@@ -44,11 +44,18 @@ class Solver(object):
         self.g_lr = config['optimizer']['g_lr']
         self.d_lr = config['optimizer']['d_lr']
         self.emo_lr = config['optimizer']['emo_cls_lr']
+        self.speaker_lr = config['optimizer']['speaker_cls_lr']
+        self.dim_lr = config['optimizer']['dim_cls_lr']
 
         self.lambda_gp = config['loss']['lambda_gp']
         self.lambda_g_emo_cls = config['loss']['lambda_g_emo_cls']
         self.lambda_cycle = config['loss']['lambda_cycle']
         self.lambda_id = config['loss']['lambda_id']
+        self.lambda_g_spk_cls = config['loss']['lambda_g_spk_cls']
+        self.lambda_g_dim_cls = config['loss']['lambda_g_dim_cls']
+
+        self.use_speaker = config['model']['use_speaker']
+        self.use_dimension = config['model']['use_dimension']
 
         self.batch_size = config['model']['batch_size']
 
@@ -84,6 +91,7 @@ class Solver(object):
 
         path = os.path.join(self.model_save_dir, self.model_name)
         self.model.load(path, self.resume_iters)
+        self.model_name = self.model.name
 
 
     def train(self):
@@ -126,6 +134,7 @@ class Solver(object):
 
             emo_labels = labels[:,0].to(device = self.device)
             spk_labels = labels[:,1].to(device = self.device)
+            # ;;;;;;; GET DIM LABELS
 
             # Generate target domain labels randomly.
             num_emos = 4
@@ -151,24 +160,25 @@ class Solver(object):
             c_emo_real_loss.backward()
             self.model.emo_cls_optimizer.step()
 
-            ####### ;;;;;;;;;;;; DO THIS
             if self.model.use_speaker:
                 self.model.reset_grad()
 
                 # Train with x_real
                 preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
 
-                c_speaker_real_loss = ce_loss_fn(preds_speaker_real, emo_labels)
+                c_speaker_real_loss = ce_loss_fn(preds_speaker_real, spk_labels)
 
                 c_speaker_real_loss.backward()
                 self.model.speaker_cls_optimizer.step()
+
             if self.model.use_dimension:
                 self.model.reset_grad()
 
                 # Train with x_real
                 preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
 
-                c_dimension_real_loss = ce_loss_fn(preds_dimension_real, emo_labels)
+                #;;; DO FOR MULTILABEL
+                c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
 
                 c_speaker_real_loss.backward()
                 self.model.speaker_cls_optimizer.step()
@@ -216,6 +226,7 @@ class Solver(object):
                 d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
                 preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
 
+
                 x_cycle = self.make_equal_length(x_cycle, x_real)
                 x_id = self.make_equal_length(x_id, x_real)
 
@@ -230,6 +241,20 @@ class Solver(object):
                                        self.lambda_id * loss_id + \
                                        self.lambda_g_emo_cls * loss_g_emo_cls# + \
                                        # self.lambda_gp * grad_penalty
+                if self.use_speaker:
+
+                    preds_spk_fake = self.model.speaker_cls(x_fake, x_fake_lens)
+                    loss_g_spk_cls = ce_loss_fn(x_fake, x_fake_lens)
+                    g_loss += self.lambda_g_spk_cls * loss_g_spk_cls
+
+                if self.use_dimension:
+
+                    preds_dim_fake = self.model.speaker_cls(x_fake, x_fake_lens)
+                    loss_g_dim_cls = ce_loss_fn(x_fake, x_fake_lens)
+                    g_loss += self.lambda_g_dim_cls * loss_g_dim_cls
+
+
+
 
 
                 g_loss.backward()
