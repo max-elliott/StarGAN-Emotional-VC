@@ -1,29 +1,89 @@
 import argparse
 import torch
+import torch.nn.functional as F
 import yaml
 import numpy as np
+import random
+import os
+
 import data_preprocessing as pp
 import audio_utils
-
+import my_dataset
+from my_dataset import get_filenames
+from solver import Solver
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='StarGAN-emo-VC')
-
     # ADD ALL CONFIG ARGS
-
-    # beta1, beta2
-    # num_feats (how many mels)
-    # G_lr, D_lr, emo_cls_lr, speaker_cls_lr, dim_cls_lr
+    parser = argparse.ArgumentParser(description='StarGAN-emo-VC')
+    parser.add_argument("-c","--checkpoint", type=int,
+                    help="display a square of a given number")
 
     config = yaml.load(open('./config.yaml', 'r'))
-    config_opt = config['model']['optimizer']
-    print(config_opt)
 
+    #fix seeds to get consistent results
+    SEED = 42
+    torch.manual_seed(SEED)
+    np.random.seed(SEED)
+    random.seed(SEED)
 
-    # l1 = [0,1,2,3]
-    # l2 = [4,5,6,7]
-    # l3 = [np.array([1,2,3]), np.array([4,5,6]), np.array([7,8,9]), np.array([10,11,12])]
-    # l4 = [np.array([1,2,3]), np.array([4,5,6]), np.array([7,8,9]), np.array([10,11,12])]
+    # Use GPU
+    USE_GPU = True
+
+    if USE_GPU and torch.cuda.is_available():
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
+
+    print(torch.cuda.is_available())
+    print(torch.__version__)
+    print(torch.cuda)
+
+    # MAKE TRAIN + TEST SPLIT
+    mel_dir = os.path.join(config['data']['dataset_dir'], "mels")
+    files = get_filenames(mel_dir)
+    files = my_dataset.shuffle(files)
+
+    train_test_split = config['data']['train_test_split']
+    split_index = int(len(files)*train_test_split)
+    train_files = files[:split_index]
+    test_files = files[split_index:]
+
+    print(len(train_files))
+    print(len(test_files))
+
+    train_dataset = my_dataset.MyDataset(config, train_files)
+    test_dataset = my_dataset.MyDataset(config, test_files)
+
+    batch_size = config['model']['batch_size']
+
+    train_loader, test_loader = my_dataset.make_variable_dataloader(train_dataset,
+                                                                    test_dataset,
+                                                                    batch_size = batch_size)
+
+    # Run solver
+    model_name = config['model']['name']
+    s = Solver(train_loader, test_loader, model_name, config)
+    s.train()
+
+    # TEST MODEL COMPONENTS
+    # data_iter = iter(train_loader)
     #
-    # print(concatenate_targets(l1,l2,l3,l4))
+    # x, y = next(data_iter)
+    #
+    # x_lens = x[1]
+    # x = x[0].unsqueeze(1)
+    # # x = x[:,:,0:80]
+    # # print(x.size(), y.size())
+    #
+    # targets = s.make_random_labels(4, batch_size)
+    # targets_one_hot = F.one_hot(targets, num_classes = 4).float()
+    #
+    # # out = s.model.G(input, targets)
+    # g_out = s.model.G(x, targets_one_hot)
+    # print('g_out = ', g_out.size())
+    # d_out = s.model.D(g_out, targets_one_hot)
+    # print('d_out = ', d_out)
+    # # WHY DIFFERNT LENGTH OUTPUT????
+    # out = s.model.emo_cls(g_out, x_lens)
+    # print('c_out = ',out)

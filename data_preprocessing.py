@@ -115,9 +115,9 @@ def get_samples_and_labels(filename):
     config = yaml.load(open('./config.yaml', 'r'))
 
 
-    wav_path = config['data']['dataset_dir'] + '/All/' + filename
+    wav_path = config['data']['sample_set_dir'] + "/" + filename
     folder = filename[:-9]
-    label_path = config['data']['dataset_dir'] + "/All/Annotations/" + folder + ".txt"
+    label_path = config['data']['dataset_dir'] + "/Annotations/" + folder + ".txt"
 
     with open(label_path, 'r') as label_file:
 

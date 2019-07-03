@@ -1,9 +1,8 @@
 model:
 
-      name: "LoggerTest"
-      num_feats: 128
-      batch_size: 4
-      train_test_split: 0.999
+      name: "NewDataloader"
+      num_feats: 80
+      batch_size: 2
       use_speaker: False
       use_dimension: False
 
@@ -49,8 +48,9 @@ logs:
 
 data:
 
-    dataset_dir: "/Users/Max/MScProject/datasets/IEMOCAP"
-    sample_set_dir: './samples/originals'
+    dataset_dir: "/Users/Max/MScProject/data"
+    sample_set_dir: '../data/samples/originals'
+    train_test_split: 0.9992
 
 verbose: False
 device: torch.device('cpu')

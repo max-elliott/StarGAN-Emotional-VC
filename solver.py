@@ -21,6 +21,7 @@ import torch.nn.functional as F
 import audio_utils
 import model
 # import data_loader
+import my_dataset
 from logger import Logger
 from sample_set import Sample_Set
 
@@ -199,7 +200,8 @@ class Solver(object):
             # Get real/fake predictions
             d_preds_real = self.model.D(x_real, emo_labels_ones)
             d_preds_fake = self.model.D(x_fake.detach(), emo_targets_ones)
-
+            print(x_real.size())
+            print(x_fake.size())
             #Calculate loss
             grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
 
@@ -298,8 +300,7 @@ class Solver(object):
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
                 self.test()
-                # filler_var = 1
-                # print("Will sample here.")
+                self.sample_at_training()
 
             # update learning rates
             self.update_lr(i)
@@ -308,9 +309,10 @@ class Solver(object):
     def test(self):
 
         # test_iter = iter(self.test_loader)
-        print("Sampling with generator...")
+        print("Testing generator accuracy ...")
         self.model.set_eval_mode()
 
+        real_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
         fake_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
         id_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
         cycle_preds = torch.rand(0).to(device = self.device, dtype = torch.long)
@@ -345,16 +347,18 @@ class Solver(object):
 
                 new_lens = x_lens #;;; needs doing
 
+                c_emo_real = self.model.emo_cls(x_real, x_lens)
                 c_emo_fake = self.model.emo_cls(x_fake, x_lens)
                 c_emo_id = self.model.emo_cls(x_id, x_lens)
                 c_emo_cycle = self.model.emo_cls(x_cycle, x_lens)
 
+                c_emo_real = torch.max(c_emo_fake, dim = 1)[1]
                 c_emo_fake = torch.max(c_emo_fake, dim = 1)[1]
                 c_emo_id = torch.max(c_emo_id, dim = 1)[1]
                 c_emo_cycle = torch.max(c_emo_cycle, dim = 1)[1]
 
                 # D as well
-
+                real_preds = torch.cat((real_preds, c_emo_real), dim=0)
                 fake_preds = torch.cat((fake_preds, c_emo_fake), dim=0)
                 id_preds = torch.cat((id_preds, c_emo_id), dim=0)
                 cycle_preds = torch.cat((cycle_preds, c_emo_cycle), dim=0)
@@ -362,17 +366,20 @@ class Solver(object):
                 total_labels = torch.cat((total_labels, emo_labels), dim=0)
                 total_targets = torch.cat((total_targets, emo_targets), dim=0)
 
+        accuracy_real = accuracy_score(total_targets, real_preds)
         accuracy_fake = accuracy_score(total_targets, fake_preds)
         accuracy_id = accuracy_score(total_labels, id_preds)
         accuracy_cycle = accuracy_score(total_labels, cycle_preds)
 
-        l = ["Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
+        l = ["Accuracy_real","Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
 
+        print('{:20} = {:.3f}'.format(l[0], accuracy_real))
         print('{:20} = {:.3f}'.format(l[0], accuracy_fake))
         print('{:20} = {:.3f}'.format(l[1], accuracy_id))
         print('{:20} = {:.3f}'.format(l[2], accuracy_cycle))
 
         if self.use_tensorboard:
+            self.logger.scalar_summary("test_accuracy_real", accuracy_real, self.current_iter)
             self.logger.scalar_summary("test_accuracy_fake", accuracy_fake, self.current_iter)
             self.logger.scalar_summary("test_accuracy_id", accuracy_id, self.current_iter)
             self.logger.scalar_summary("test_accuracy_cycle", accuracy_cycle, self.current_iter)
@@ -380,7 +387,7 @@ class Solver(object):
     def sample_at_training(self):
         '''
         Passes each performance sample through G for every target emotion. They
-        are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png'
+        are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png + .npy'
         '''
 
         print("Saving samples...")
@@ -412,8 +419,8 @@ class Solver(object):
                                 str(self.current_iter) + ".npy"
 
                     fake = fake.squeeze()
-                    audio_utils.save_spec_plot(fake.t(), self.model_name, filename)
-                    audio_utils.save_spec(fake.t(), self.model_name, filename)
+                    audio_utils.save_spec_plot(fake.t(), self.model_name, filename_png)
+                    audio_utils.save_spec(fake.t(), self.model_name, filename_npy)
 
 
 
@@ -490,18 +497,12 @@ if __name__ == '__main__':
 
     import yaml
     import data_preprocessing
-    import data_loader
-
-    # from os.path import exists
-    # from wheel.pep425tags import get_abbr_impl, get_impl_ver, get_abi_tag
-    # platform = '{}{}-{}'.format(get_abbr_impl(), get_impl_ver(), get_abi_tag())
-    # cuda_output = !ldconfig -p|grep cudart.so|sed -e 's/.*\.\([0-9]*\)\.\([0-9]*\)$/cu\1\2/'
-    # accelerator = cuda_output[0] if exists('/dev/nvidia0') else 'cpu'
+    # import data_loader
 
     # LOAD IN DATA TO DATA_LOADERS
     config = yaml.load(open('./config.yaml', 'r'))
 
-    names, mels, labels = data_preprocessing.load_session_data(1)
+    # names, mels, labels = data_preprocessing.load_session_data(1)
 
     print("Number mels: ", len(mels), len(labels))
 

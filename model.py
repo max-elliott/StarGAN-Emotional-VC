@@ -262,11 +262,11 @@ class Generator(nn.Module):
         self.down2 = Down2d(32, 64, (8,4), (2,2), (3,1))
         self.down3 = Down2d(64, 128, (8,4), (2,2), (3,1))
         self.down4 = Down2d(128, 64, (5,3), (1,1), (2,1))
-        self.down5 = Down2d(64, 5, (5,8), (1,8), (2,1))
+        self.down5 = Down2d(64, 5, (5,10), (1,10), (2,1))
         # )
 
 
-        self.up1 = Up2d(9, 64, (5,8), (1,8), (2,0))
+        self.up1 = Up2d(9, 64, (5,10), (1,10), (2,0))
         self.up2 = Up2d(68, 128, (5,3), (1,1), (2,1))
         self.up3 = Up2d(132, 64, (8,4), (2,2), (3,1))
         self.up4 = Up2d(68, 32, (8,4), (2,2), (3,1))
@@ -325,7 +325,7 @@ class Discriminator(nn.Module):
         self.d3 = Down2d(36, 32, (8,3), (2,1), (3,1))
         self.d4 = Down2d(36, 32, (6,3), (2,1), (2,1))
 
-        self.conv = nn.Conv2d(36, 1, (36,8), (36,8), (2,0))
+        self.conv = nn.Conv2d(36, 1, (8,8), (8,8), (2,0))
         self.pool = nn.AdaptiveAvgPool2d(1)
 
     def forward(self, x, c):

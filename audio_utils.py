@@ -33,7 +33,7 @@ class hyperparams(object):
         self.preemph = 0.97
 
         self.config = yaml.load(open('./config.yaml', 'r'))
-        self.sample_dir = self.config['logs']['sample_dir']
+        self.sample_set_dir = self.config['logs']['sample_dir']
 
 
 hp = hyperparams()
@@ -67,7 +67,7 @@ def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
     y = input wav file
     '''
     mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels = n_mels,
-        n_fft = hp.n_fft, hop_length = hp.hop_length, power = hp.power)
+        n_fft = hp.n_fft, hop_length = hp.hop_length)
 
     return mel_spec
 
@@ -155,7 +155,7 @@ def save_spec(spec, model_name, filename, type = 'mel'):
     if isinstance(spec, torch.Tensor):
         spec = spec.numpy()
 
-    path = os.path.join(hp.sample_dir, model_name)
+    path = os.path.join(hp.sample_set_dir, model_name)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -164,7 +164,7 @@ def save_spec(spec, model_name, filename, type = 'mel'):
 
     np.save(path, spec)
 
-    print("Saved.")
+    # print("Saved.")
 
 def save_spec_plot(spec, model_name, filename, type = 'mel'):
     '''
@@ -182,7 +182,7 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
     plt.colorbar(format='%+2.0f dB')
     plt.title('Power spectrogram')
 
-    path = os.path.join(hp.sample_dir, model_name)
+    path = os.path.join(hp.sample_set_dir, model_name)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -191,7 +191,8 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
 
     plt.savefig(path)
     plt.close(fig)
-    print("Saved.")
+    plt.close("all")
+    # print("Saved.")
 
 if __name__ == '__main__':
 
