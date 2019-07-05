@@ -33,67 +33,72 @@ from sklearn.metrics import recall_score
 
 class Solver(object):
 
-    def __init__(self, train_loader, test_loader, model_name, config):
+    def __init__(self, train_loader, test_loader, config, load_dir = None):
 
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.sample_set = Sample_Set(config)
         self.config = config
 
+        self.model_name = self.config['model']['name']
+        self.set_configuration()
+        self.model = model.StarGAN_emo_VC1(self.config, self.model_name)
+
+        if not load_dir == None:
+            self.load_checkpoint(load_dir)
+
+    def load_checkpoint(self, load_dir):
+
+        # path = os.path.join(self.model_save_dir, self.model_name)
+        self.model.load(load_dir)
+        self.config = self.model.config
+        self.set_configuration()
+
+    def set_configuration(self):
+
         # These are the INITIAL lr's. They are updated within the optimizers
         # over the training iterations
-        self.g_lr = config['optimizer']['g_lr']
-        self.d_lr = config['optimizer']['d_lr']
-        self.emo_lr = config['optimizer']['emo_cls_lr']
-        self.speaker_lr = config['optimizer']['speaker_cls_lr']
-        self.dim_lr = config['optimizer']['dim_cls_lr']
+        self.g_lr = self.config['optimizer']['g_lr']
+        self.d_lr = self.config['optimizer']['d_lr']
+        self.emo_lr = self.config['optimizer']['emo_cls_lr']
+        self.speaker_lr = self.config['optimizer']['speaker_cls_lr']
+        self.dim_lr = self.config['optimizer']['dim_cls_lr']
 
-        self.lambda_gp = config['loss']['lambda_gp']
-        self.lambda_g_emo_cls = config['loss']['lambda_g_emo_cls']
-        self.lambda_cycle = config['loss']['lambda_cycle']
-        self.lambda_id = config['loss']['lambda_id']
-        self.lambda_g_spk_cls = config['loss']['lambda_g_spk_cls']
-        self.lambda_g_dim_cls = config['loss']['lambda_g_dim_cls']
+        self.lambda_gp = self.config['loss']['lambda_gp']
+        self.lambda_g_emo_cls = self.config['loss']['lambda_g_emo_cls']
+        self.lambda_cycle = self.config['loss']['lambda_cycle']
+        self.lambda_id = self.config['loss']['lambda_id']
+        self.lambda_g_spk_cls = self.config['loss']['lambda_g_spk_cls']
+        self.lambda_g_dim_cls = self.config['loss']['lambda_g_dim_cls']
 
-        self.use_speaker = config['model']['use_speaker']
-        self.use_dimension = config['model']['use_dimension']
+        self.use_speaker = self.config['model']['use_speaker']
+        self.use_dimension = self.config['model']['use_dimension']
 
-        self.batch_size = config['model']['batch_size']
+        self.batch_size = self.config['model']['batch_size']
 
-        self.num_iters = config['loss']['num_iters']
-        self.num_iters_decay = config['loss']['num_iters_decay']
-        self.resume_iters = config['loss']['resume_iters']
+        self.num_iters = self.config['loss']['num_iters']
+        self.num_iters_decay = self.config['loss']['num_iters_decay']
+        self.resume_iters = self.config['loss']['resume_iters']
         self.current_iter = self.resume_iters
 
         # Number of D/emo_cls updates for each G update
-        self.d_to_g_ratio = config['loss']['d_to_g_ratio']
+        self.d_to_g_ratio = self.config['loss']['d_to_g_ratio']
 
-        self.use_tensorboard = config['logs']['use_tensorboard']
-        self.log_every = config['logs']['log_every']
+        self.use_tensorboard = self.config['logs']['use_tensorboard']
+        self.log_every = self.config['logs']['log_every']
 
-        self.sample_dir = config['logs']['sample_dir']
-        self.sample_every = config['logs']['sample_every']
+        self.sample_dir = self.config['logs']['sample_dir']
+        self.sample_every = self.config['logs']['sample_every']
 
-        self.model_save_dir = config['logs']['model_save_dir']
-        self.model_save_every = config['logs']['model_save_every']
+        self.model_save_dir = self.config['logs']['model_save_dir']
+        self.model_save_every = self.config['logs']['model_save_every']
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         if self.use_tensorboard:
-            self.logger = Logger(config['logs']['log_dir'], model_name)
+            self.logger = Logger(self.config['logs']['log_dir'], self.model_name)
 
-        self.model_name = model_name
-        self.model = model.StarGAN_emo_VC1(config, model_name)
-
-        if self.resume_iters != 0:
-            self.load_checkpoint()
-
-    def load_checkpoint(self):
-
-        path = os.path.join(self.model_save_dir, self.model_name)
-        self.model.load(path, self.resume_iters)
-        self.model_name = self.model.name
-
+        self.model_name = self.config['model']['name']
 
     def train(self):
         '''
@@ -246,13 +251,13 @@ class Solver(object):
                 if self.use_speaker:
 
                     preds_spk_fake = self.model.speaker_cls(x_fake, x_fake_lens)
-                    loss_g_spk_cls = ce_loss_fn(x_fake, x_fake_lens)
+                    loss_g_spk_cls = ce_loss_fn(preds_spk_fake, spk_labels)
                     g_loss += self.lambda_g_spk_cls * loss_g_spk_cls
 
                 if self.use_dimension:
 
                     preds_dim_fake = self.model.speaker_cls(x_fake, x_fake_lens)
-                    loss_g_dim_cls = ce_loss_fn(x_fake, x_fake_lens)
+                    loss_g_dim_cls = ce_loss_fn(preds_dim_fake, dim_labels)
                     g_loss += self.lambda_g_dim_cls * loss_g_dim_cls
 
 
@@ -281,6 +286,14 @@ class Solver(object):
                 loss['loss_id'] = loss_id.item()
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()
+
+                if self.use_speaker:
+                    loss['C/spk_real_loss'] = c_speaker_real_loss.item()
+                    loss['G/spk_loss'] = loss_g_spk_cls.item()
+
+                if self.use_dimension:
+                    loss['C/dim_real_loss'] = c_dimension_real_loss_real_loss.item()
+                    loss['G/dim_loss'] = loss_g_dim_cls.item()
 
                 for name, val in loss.items():
                     print("{:20} = {:.4f}".format(name, val))

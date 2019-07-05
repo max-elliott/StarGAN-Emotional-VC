@@ -1,11 +1,10 @@
 model:
 
-      name: "NewDataloader"
+      name: "SpeakerSolver"
       num_feats: 80
       batch_size: 2
-      use_speaker: False
+      use_speaker: True
       use_dimension: False
-
 
 loss:
 

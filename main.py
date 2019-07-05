@@ -16,8 +16,14 @@ if __name__ == '__main__':
 
     # ADD ALL CONFIG ARGS
     parser = argparse.ArgumentParser(description='StarGAN-emo-VC')
-    parser.add_argument("-c","--checkpoint", type=int,
-                    help="display a square of a given number")
+    parser.add_argument("-c","--checkpoint", type=str, default = None,
+                    help="Directory of checkpoint to resume training from")
+    parser.add_argument("-s", "--segment_len", type = int, default = None,
+                    help="Set utterance length if using fixed lengths")
+    parser.add_argument("-e", "--evaluate", action = 'store_true',
+                    help="False = train, True = evaluate model")
+
+    args = parser.parse_args()
 
     config = yaml.load(open('./config.yaml', 'r'))
 
@@ -62,9 +68,14 @@ if __name__ == '__main__':
                                                                     batch_size = batch_size)
 
     # Run solver
-    model_name = config['model']['name']
-    s = Solver(train_loader, test_loader, model_name, config)
-    s.train()
+    # load_dir = './checkpoints/NewSolver/00006.ckpt'
+    load_dir = args.checkpoint
+    s = Solver(train_loader, test_loader, config, load_dir = load_dir)
+
+    if not args.evaluate:
+        s.train()
+    else:
+        print("No training. Model loaded in evaluation mode.")
 
     # TEST MODEL COMPONENTS
     # data_iter = iter(train_loader)

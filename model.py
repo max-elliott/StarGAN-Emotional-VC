@@ -150,12 +150,15 @@ class StarGAN_emo_VC1(object):
         if not os.path.exists(path):
             os.makedirs(path)
 
+        self.config['loss']['resume_iters'] = iter
+
         state = {'D': self.D.state_dict(),
                  'G': self.G.state_dict(),
                  'emo': self.emo_cls.state_dict(),
                  'd_opt': self.d_optimizer.state_dict(),
                  'g_opt': self.g_optimizer.state_dict(),
                  'emo_opt': self.emo_cls_optimizer.state_dict(),
+                 'config': self.config
                 }
         if self.use_speaker:
             state['spk'] = self.speaker_cls.state_dict()
@@ -172,20 +175,21 @@ class StarGAN_emo_VC1(object):
 
         print("Model saved as {}.".format(path))
 
-    def load(self, load_dir, iter):
+    def load(self, load_dir):
 
-        if load_dir[-1] == '/':
-            load_dir = load_dir[0:-1]
+        # if load_dir[-1] == '/':
+        #     load_dir = load_dir[0:-1]
+        #
+        # self.name = os.path.basename(load_dir)
+        #
+        # path = os.path.join(load_dir, "{:05}.ckpt".format(iter))
 
-        self.name = os.path.basename(load_dir)
+        print(load_dir)
+        dictionary = torch.load(load_dir)
 
-        path = os.path.join(load_dir, "{:05}.ckpt".format(iter))
-        # G_path = os.path.join(load_dir, "{:05}_G.ckpt".format(iter))
-        # emo_path = os.path.join(load_dir, "{:05}_C_emo.ckpt".format(iter))
-
-        dictionary = torch.load(path)
-        # G_dict = torch.load(G_path)
-        # emo_dict = torch.load(emo_path)
+        self.config = dictionary['config']
+        self.use_speaker = self.config['model']['use_speaker']
+        self.use_dimension = self.config['model']['use_dimension']
 
         self.D.load_state_dict(dictionary['D'])
         self.G.load_state_dict(dictionary['G'])
