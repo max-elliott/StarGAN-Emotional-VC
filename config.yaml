@@ -1,6 +1,6 @@
 model:
 
-      name: "SpeakerSolver"
+      name: "TensorboardTest"
       num_feats: 80
       batch_size: 2
       use_speaker: True
