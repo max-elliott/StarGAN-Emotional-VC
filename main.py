@@ -16,6 +16,8 @@ if __name__ == '__main__':
 
     # ADD ALL CONFIG ARGS
     parser = argparse.ArgumentParser(description='StarGAN-emo-VC')
+    parser.add_argument("-n", "--name", type = str, default = None,
+                    help="Model name for training.")
     parser.add_argument("-c","--checkpoint", type=str, default = None,
                     help="Directory of checkpoint to resume training from")
     parser.add_argument("-s", "--segment_len", type = int, default = None,
@@ -26,6 +28,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     config = yaml.load(open('./config.yaml', 'r'))
+    if args.name != None:
+        config['model']['name'] = args.name
+        print(config['model']['name'])
 
     #fix seeds to get consistent results
     SEED = 42
