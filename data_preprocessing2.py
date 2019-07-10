@@ -10,7 +10,7 @@ import librosa
 import random
 import os
 from librosa.util import find_files
-
+from matplotlib import pyplot as plt
 
 def get_speaker_from_filename(filename):
     code = filename[4] + filename[-8]
@@ -121,6 +121,9 @@ def get_filenames(data_dir):
 
 if __name__ == '__main__':
 
+    min_length = 0 # actual is 59
+    max_length = 688
+
     data_dir = '/Users/Max/MScProject/data'
     annotations_dir = os.path.join(data_dir, "audio")
     files = find_files(data_dir, ext = 'wav')
@@ -129,7 +132,7 @@ if __name__ == '__main__':
     for f in files:
         f = os.path.basename(f)
         filenames.append(f)
-    print(filenames)
+    # print(filenames)
 
     i = 0
     mels_made = 0
@@ -138,7 +141,9 @@ if __name__ == '__main__':
         wav, labels = get_wav_and_labels(f, data_dir)
         mel = audio_utils.wav2melspectrogram(wav)
         labels = np.array(labels)
-        if labels[0] != -1:
+        if labels[0] != -1 and mel.shape[1] < max_length:
+
+
             np.save(data_dir + "/mels/" + f[:-4] + ".npy", mel)
             np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
             mels_made += 1
@@ -147,3 +152,66 @@ if __name__ == '__main__':
         if i % 100 == 0:
             print(i, " complete.")
             print(mels_made, "mels made.")
+
+    files = find_files(data_dir + "/mels", ext = 'npy')
+    lengths = []
+    for f in files:
+
+        mel = np.load(f)
+        lengths.append(mel.shape[1])
+        # print(mel.shape)
+
+    n, bins, patches = plt.hist(lengths, bins = 22)
+    plt.xlabel('Sequence length')
+    plt.ylabel('Count')
+    plt.title(r'New histogram of sequence lengths for 4 emotional categories')
+    plt.show()
+
+    # i = 0
+    # mels_made = 0
+    # mel_lengths = []
+    #
+    # max_intensity = 0
+    # min_intensity = 99999999
+    #
+    # for f in filenames:
+    #
+    #     wav, labels = get_wav_and_labels(f, data_dir)
+    #     mel = audio_utils.wav2melspectrogram(wav)
+    #     labels = np.array(labels)
+    #     if labels[0] != -1:
+    #
+    #         # mel_lengths.append(mel.shape[1])
+    #         max_val = np.max(mel)
+    #         min_val = np.min(mel)
+    #
+    #         if max_val > max_intensity:
+    #             max_intensity = max_val
+    #         if min_val < min_intensity:
+    #             min_intensity = min_val
+    #         mels_made += 1
+    #
+    #     i += 1
+    #     if i % 100 == 0:
+    #         # print(mel_lengths[mels_made-1])
+    #         print(mel[:, 45])
+    #         print(max_intensity, ", ", min_intensity)
+    #         print(i, " complete.")
+    #         print(mels_made, "mels made.")
+    #
+    # print("max = {}".format(max_intensity))
+    # print("min = {}".format(min_intensity))
+    #
+    # np.save('./stats/all_mel_lengths', np.array(mel_lengths))
+    #
+    # n, bins, patches = plt.hist(mel_lengths, bins = 22)
+    # plt.xlabel('Sequence length')
+    # plt.ylabel('Count')
+    # plt.title(r'Histogram of sequence lengths for 4 emotional categories')
+    # plt.show()
+    #
+    # mel_lengths = sorted(mel_lengths)
+    # print(mel_lengths[0:30])
+    # split_index = int(len(mel_lengths)*0.9)
+    # print(mel_lengths[split_index])  # IS MAX LENGTH OF mels
+    # print(mel_lengths[0])  # IS MIN LENGTH OF mels

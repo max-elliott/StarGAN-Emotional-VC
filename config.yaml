@@ -1,8 +1,8 @@
 model:
 
-      name: "TensorboardTest"
+      name: "first_model"
       num_feats: 80
-      batch_size: 2
+      batch_size: 32
       use_speaker: True
       use_dimension: False
 
@@ -12,14 +12,14 @@ loss:
     lambda_g_emo_cls: 1
     lambda_g_spk_cls: 1
     lambda_g_dim_cls: 1
-    lambda_cycle: 1
-    lambda_id: 1
+    lambda_cycle: 5
+    lambda_id: 5
 
-    num_iters: 10
-    num_iters_decay: 5
+    num_iters: 1000
+    num_iters_decay: 500
     resume_iters: 0
 
-    d_to_g_ratio: 2
+    d_to_g_ratio: 4
 
 optimizer:
 
@@ -41,15 +41,16 @@ logs:
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 2
-    sample_every: 2
-    model_save_every: 2
+    log_every: 4
+    sample_every: 20
+    model_save_every: 25
 
 data:
 
-    dataset_dir: "/Users/Max/MScProject/data"
+    dataset_dir: "../data"
     sample_set_dir: '../data/samples/originals'
-    train_test_split: 0.9992
+    train_test_split: 0.95
+    normalise_mels: True
 
 verbose: False
-device: torch.device('cpu')
+device: torch.device('cuda')

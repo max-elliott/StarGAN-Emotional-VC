@@ -205,8 +205,9 @@ class Solver(object):
             # Get real/fake predictions
             d_preds_real = self.model.D(x_real, emo_labels_ones)
             d_preds_fake = self.model.D(x_fake.detach(), emo_targets_ones)
-            print(x_real.size())
-            print(x_fake.size())
+            # print(x_real.size())
+            # print(x_fake.size())
+
             #Calculate loss
             grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
 
@@ -281,9 +282,9 @@ class Solver(object):
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
                 loss['G/emo_loss'] = loss_g_emo_cls.item()
-                loss['gradient_penalty'] = grad_penalty.item()
-                loss['loss_cycle'] = loss_cycle.item()
-                loss['loss_id'] = loss_id.item()
+                loss['D/gradient_penalty'] = grad_penalty.item()
+                loss['G/loss_cycle'] = loss_cycle.item()
+                loss['G/loss_id'] = loss_id.item()
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()
 
@@ -317,6 +318,8 @@ class Solver(object):
 
             # update learning rates
             self.update_lr(i)
+
+        self.model.save(save_dir = self.model_save_dir, iter = self.current_iter)
 
 
     def test(self):
@@ -392,10 +395,10 @@ class Solver(object):
         print('{:20} = {:.3f}'.format(l[2], accuracy_cycle))
 
         if self.use_tensorboard:
-            self.logger.scalar_summary("test_accuracy_real", accuracy_real, self.current_iter)
-            self.logger.scalar_summary("test_accuracy_fake", accuracy_fake, self.current_iter)
-            self.logger.scalar_summary("test_accuracy_id", accuracy_id, self.current_iter)
-            self.logger.scalar_summary("test_accuracy_cycle", accuracy_cycle, self.current_iter)
+            self.logger.scalar_summary("Val/test_accuracy_real", accuracy_real, self.current_iter)
+            self.logger.scalar_summary("Val/test_accuracy_fake", accuracy_fake, self.current_iter)
+            self.logger.scalar_summary("Val/test_accuracy_id", accuracy_id, self.current_iter)
+            self.logger.scalar_summary("Val/test_accuracy_cycle", accuracy_cycle, self.current_iter)
 
     def sample_at_training(self):
         '''

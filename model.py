@@ -176,7 +176,9 @@ class StarGAN_emo_VC1(object):
         print("Model saved as {}.".format(path))
 
     def load(self, load_dir):
-
+        '''
+        load_dir: full directory of checkpoint to load
+        '''
         # if load_dir[-1] == '/':
         #     load_dir = load_dir[0:-1]
         #

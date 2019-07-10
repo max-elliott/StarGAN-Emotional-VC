@@ -4,6 +4,7 @@ import os
 import yaml
 import copy
 
+
 import librosa
 import librosa.display
 
@@ -35,11 +36,17 @@ class hyperparams(object):
         self.config = yaml.load(open('./config.yaml', 'r'))
         self.sample_set_dir = self.config['logs']['sample_dir']
 
+        self.normalise_mels = True
+        self.max_norm_value = 3226.99139880277
+        self.min_norm_value = 3.8234146815389095e-10
+
 
 hp = hyperparams()
 
 def load_wav(path):
-    return wavfile.read(path)[1]
+    wav = wavfile.read(path)[1]
+    wav = copy.deepcopy(wav)/32767.0
+    return wav
 
 def save_wav(wav, path):
     wav *= 32767 / max(0.01, np.max(np.abs(wav)))
@@ -59,15 +66,24 @@ def wav2spectrogram(y, sr = hp.sr):
 
     return spec_mag
 
-def lowpass(spec, frequency):
-    return spec[:frequency, :]
+def _normalise_mel(mel):
+    mel = (mel - hp.min_norm_value)/(hp.max_norm_value - hp.min_norm_value)
+    return mel
+
+def _unnormalise_mel(mel):
+    mel = (hp.max_norm_value - hp. min_norm_value) * mel + hp.min_norm_value
+    return mel
 
 def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
     '''
     y = input wav file
     '''
+
     mel_spec = librosa.feature.melspectrogram(y=y, sr=sr, n_mels = n_mels,
         n_fft = hp.n_fft, hop_length = hp.hop_length)
+    # mel_spec = librosa.core.amplitude_to_db(y)
+    if hp.normalise_mels:
+        mel_spec = _normalise_mel(mel_spec)
 
     return mel_spec
 
@@ -87,6 +103,7 @@ def melspectrogram2wav(mel):
 
 def spectrogram2wav(spectrogram):
     '''
+    Griffin-Lim Algorithm
     spectrogram: [t, f], i.e. [t, nfft // 2 + 1]
     '''
     if isinstance(spectrogram, torch.Tensor):
@@ -138,8 +155,13 @@ def plot_spec(spec, type = 'mel'):
 
     if isinstance(spec, torch.Tensor):
         spec = spec.numpy()
-    librosa.display.specshow(spec, y_axis=type, sr=hp.sr, hop_length=hp.hop_length,
-                                                    fmin=None, fmax=4000)
+
+    if hp.normalise_mels:
+        spec = _unnormalise_mel(spec)
+
+    librosa.display.specshow(librosa.power_to_db(spec), y_axis=type, sr=hp.sr,
+                                hop_length=hp.hop_length)
+                                                    # fmin=None, fmax=4000)
     plt.colorbar(format='%+2.0f dB')
     plt.title('Power spectrogram')
     plt.show()
@@ -154,6 +176,8 @@ def save_spec(spec, model_name, filename, type = 'mel'):
 
     if isinstance(spec, torch.Tensor):
         spec = spec.numpy()
+    if hp.normalise_mels:
+        spec = _unnormalise_mel(spec)
 
     path = os.path.join(hp.sample_set_dir, model_name)
 
@@ -176,9 +200,12 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
 
     if isinstance(spec, torch.Tensor):
         spec = spec.numpy()
+    if hp.normalise_mels:
+        spec = _unnormalise_mel(spec)
 
-    librosa.display.specshow(spec, y_axis=type, sr=hp.sr, hop_length=hp.hop_length,
-                                                    fmin=None, fmax=4000)
+    librosa.display.specshow(librosa.power_to_db(spec), y_axis=type, sr=hp.sr,
+                            hop_length=hp.hop_length)
+                                                    # fmin=None, fmax=4000)
     plt.colorbar(format='%+2.0f dB')
     plt.title('Power spectrogram')
 
@@ -197,4 +224,8 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
 if __name__ == '__main__':
 
     files = librosa.util.find_files("/Users/Max/MScProject/datasets/test_dir")
-    print(files[0])
+    # print(files[0])
+    filepath = files[0]
+    wav = load_wav(filepath)
+    mel = wav2melspectrogram(wav)
+    save_spec_plot(mel, "None", "Test2.png")

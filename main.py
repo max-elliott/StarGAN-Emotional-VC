@@ -38,6 +38,7 @@ if __name__ == '__main__':
 
     if USE_GPU and torch.cuda.is_available():
         device = torch.device('cuda')
+        torch.cuda.manual_seed_all(SEED)
     else:
         device = torch.device('cpu')
 
@@ -76,6 +77,9 @@ if __name__ == '__main__':
         s.train()
     else:
         print("No training. Model loaded in evaluation mode.")
+
+    # for i, (x,y) in train_loader:
+    #
 
     # TEST MODEL COMPONENTS
     # data_iter = iter(train_loader)

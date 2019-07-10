@@ -118,7 +118,7 @@ def collate_length_order(batch):
     sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
 
     max_len = sequences_padded.size(1)
-    print("Original size = ", max_len)
+    # print("Original size = ", max_len)
     div8 = max_len%8==0
     div5 = max_len%5==0
     div9 = max_len%3==0
