@@ -71,8 +71,10 @@ class Solver(object):
         self.lambda_g_spk_cls = self.config['loss']['lambda_g_spk_cls']
         self.lambda_g_dim_cls = self.config['loss']['lambda_g_dim_cls']
 
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         self.emo_loss_weights = torch.Tensor([4040./549, 4040./890,
-                                             4040./996, 4040./1605])
+                                             4040./996, 4040./1605]).to(self.device)
 
         self.use_speaker = self.config['model']['use_speaker']
         self.use_dimension = self.config['model']['use_dimension']
@@ -95,8 +97,6 @@ class Solver(object):
 
         self.model_save_dir = self.config['logs']['model_save_dir']
         self.model_save_every = self.config['logs']['model_save_every']
-
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         if self.use_tensorboard:
             self.logger = Logger(self.config['logs']['log_dir'], self.model_name)
