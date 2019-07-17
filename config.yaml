@@ -15,8 +15,8 @@ loss:
     lambda_cycle: 5
     lambda_id: 5
 
-    num_iters: 20
-    num_iters_decay: 10
+    num_iters: 6
+    num_iters_decay: 3
     resume_iters: 0
 
     d_to_g_ratio: 2
@@ -42,8 +42,8 @@ logs:
     model_save_dir: './checkpoints'
 
     log_every: 2
-    sample_every: 5
-    model_save_every: 3
+    sample_every: 2
+    model_save_every: 2
 
 data:
 
