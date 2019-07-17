@@ -107,7 +107,7 @@ def spectrogram2wav(spectrogram):
     spectrogram: [t, f], i.e. [t, nfft // 2 + 1]
     '''
     if isinstance(spectrogram, torch.Tensor):
-        spectrogram = spectrogram.numpy()
+        spectrogram = spectrogram.cpu().numpy()
 
     spectrogram = db_to_amp(spectrogram)#**hp.power
 
@@ -154,7 +154,7 @@ def plot_spec(spec, type = 'mel'):
     plt.figure(figsize=(6, 4))
 
     if isinstance(spec, torch.Tensor):
-        spec = spec.numpy()
+        spec = spec.cpu().numpy()
 
     if hp.normalise_mels:
         spec = _unnormalise_mel(spec)
@@ -175,7 +175,7 @@ def save_spec(spec, model_name, filename, type = 'mel'):
     fig = plt.figure(figsize=(6,4))
 
     if isinstance(spec, torch.Tensor):
-        spec = spec.numpy()
+        spec = spec.cpu().numpy()
     if hp.normalise_mels:
         spec = _unnormalise_mel(spec)
 
@@ -199,7 +199,7 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
     fig = plt.figure(figsize=(6,4))
 
     if isinstance(spec, torch.Tensor):
-        spec = spec.numpy()
+        spec = spec.cpu().numpy()
     if hp.normalise_mels:
         spec = _unnormalise_mel(spec)
 

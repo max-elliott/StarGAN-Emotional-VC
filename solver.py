@@ -385,10 +385,10 @@ class Solver(object):
                 total_labels = torch.cat((total_labels, emo_labels), dim=0)
                 total_targets = torch.cat((total_targets, emo_targets), dim=0)
 
-        accuracy_real = accuracy_score(total_targets.cpu(), real_preds.cpu())
-        accuracy_fake = accuracy_score(total_targets.cpu(), fake_preds.cpu())
-        accuracy_id = accuracy_score(total_labels.cpu(), id_preds.cpu())
-        accuracy_cycle = accuracy_score(total_labels.cpu(), cycle_preds.cpu())
+        accuracy_real = accuracy_score(total_targets, real_preds)
+        accuracy_fake = accuracy_score(total_targets, fake_preds)
+        accuracy_id = accuracy_score(total_labels, id_preds)
+        accuracy_cycle = accuracy_score(total_labels, cycle_preds)
 
         l = ["Accuracy_real","Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
 
