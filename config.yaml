@@ -2,7 +2,7 @@ model:
 
       name: "first_model"
       num_feats: 80
-      batch_size: 64
+      batch_size: 16
       use_speaker: False
       use_dimension: False
 
