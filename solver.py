@@ -159,12 +159,12 @@ class Solver(object):
             #############################################################
             print('Training Classifiers...')
             self.model.reset_grad()
-            ce_loss_fn = nn.CrossEntropyLoss()
+            ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
 
             # Train with x_real
             preds_emo_real = self.model.emo_cls(x_real, x_lens)
 
-            c_emo_real_loss = ce_loss_fn(preds_emo_real, emo_labels)
+            c_emo_real_loss = ce_weighted_loss_fn(preds_emo_real, emo_labels)
 
             c_emo_real_loss.backward()
             self.model.emo_cls_optimizer.step()
@@ -246,7 +246,7 @@ class Solver(object):
                 loss_g_fake = - d_preds_for_g.mean()
                 loss_cycle = l1_loss_fn(x_cycle, x_real)
                 loss_id = l1_loss_fn(x_id, x_real)
-                loss_g_emo_cls = ce_loss_fn(preds_emo_fake, emo_targets)
+                loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
                 g_loss = loss_g_fake + self.lambda_cycle * loss_cycle + \
                                        self.lambda_id * loss_id + \
