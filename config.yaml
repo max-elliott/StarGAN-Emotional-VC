@@ -15,11 +15,11 @@ loss:
     lambda_cycle: 5
     lambda_id: 5
 
-    num_iters: 1000
-    num_iters_decay: 500
+    num_iters: 20
+    num_iters_decay: 10
     resume_iters: 0
 
-    d_to_g_ratio: 4
+    d_to_g_ratio: 2
 
 optimizer:
 
@@ -41,15 +41,15 @@ logs:
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 4
-    sample_every: 20
-    model_save_every: 20
+    log_every: 2
+    sample_every: 5
+    model_save_every: 3
 
 data:
 
     dataset_dir: "../data"
     sample_set_dir: '../data/samples/originals'
-    train_test_split: 0.95
+    train_test_split: 0.90
     normalise_mels: True
 
 verbose: False
