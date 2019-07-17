@@ -2,8 +2,8 @@ model:
 
       name: "first_model"
       num_feats: 80
-      batch_size: 32
-      use_speaker: True
+      batch_size: 2
+      use_speaker: False
       use_dimension: False
 
 loss:
@@ -15,11 +15,11 @@ loss:
     lambda_cycle: 5
     lambda_id: 5
 
-    num_iters: 1000
-    num_iters_decay: 500
+    num_iters: 10
+    num_iters_decay: 5
     resume_iters: 0
 
-    d_to_g_ratio: 4
+    d_to_g_ratio: 2
 
 optimizer:
 
@@ -41,7 +41,7 @@ logs:
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 4
+    log_every: 2
     sample_every: 20
     model_save_every: 25
 

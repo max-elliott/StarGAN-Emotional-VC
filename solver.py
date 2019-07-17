@@ -71,6 +71,9 @@ class Solver(object):
         self.lambda_g_spk_cls = self.config['loss']['lambda_g_spk_cls']
         self.lambda_g_dim_cls = self.config['loss']['lambda_g_dim_cls']
 
+        self.emo_loss_weights = torch.Tensor([4040./549, 4040./890,
+                                             4040./996, 4040./1605])
+
         self.use_speaker = self.config['model']['use_speaker']
         self.use_dimension = self.config['model']['use_dimension']
 

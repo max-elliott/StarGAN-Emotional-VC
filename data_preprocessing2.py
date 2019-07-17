@@ -134,39 +134,100 @@ if __name__ == '__main__':
         filenames.append(f)
     # print(filenames)
 
-    i = 0
-    mels_made = 0
-    for f in filenames:
+    ############################################
+    #      Code for making mels and labels     #
+    ############################################
+    # i = 0
+    # mels_made = 0
+    # for f in filenames:
+    #
+    #     wav, labels = get_wav_and_labels(f, data_dir)
+    #     mel = audio_utils.wav2melspectrogram(wav)
+    #     labels = np.array(labels)
+    #     if labels[0] != -1 and mel.shape[1] < max_length:
+    #
+    #
+    #         np.save(data_dir + "/mels/" + f[:-4] + ".npy", mel)
+    #         np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
+    #         mels_made += 1
+    #
+    #     i += 1
+    #     if i % 100 == 0:
+    #         print(i, " complete.")
+    #         print(mels_made, "mels made.")
 
-        wav, labels = get_wav_and_labels(f, data_dir)
-        mel = audio_utils.wav2melspectrogram(wav)
-        labels = np.array(labels)
-        if labels[0] != -1 and mel.shape[1] < max_length:
+
+    ############################################
+    #      Loop through mels for analysis      #
+    ############################################
+    # files = find_files(data_dir + "/mels", ext = 'npy')
+    # lengths = []
+    # for f in files:
+    #
+    #     mel = np.load(f)
+    #     lengths.append(mel.shape[1])
+    #     # print(mel.shape)
+    #
+    # n, bins, patches = plt.hist(lengths, bins = 22)
+    # plt.xlabel('Sequence length')
+    # plt.ylabel('Count')
+    # plt.title(r'New histogram of sequence lengths for 4 emotional categories')
+    # plt.show()
+
+    ############################################
+    #     Loop through labels for analysis     #
+    ############################################
+    # files = find_files(data_dir + "/labels", ext = 'npy')
+    # category_counts = np.zeros((4))
+    # speaker_counts = np.zeros((10))
+    # for f in files:
+    #
+    #     labels = np.load(f)
+    #     cat = int(labels[0])
+    #     speaker = int(labels[1])
+    #     category_counts[cat] += 1
+    #     speaker_counts[speaker] += 1
+    #
+    # print(category_counts)
+    # print(speaker_counts)
+    # #### RESULTS ####
+    # # [ 549.  890.  996. 1605.] 4040 total
+    # # [416. 425. 353. 364. 448. 480. 342. 370. 473. 369.]
+    # #### # # # # ####
+    #
+    # def make_autopct(values):
+    #
+    #     def my_autopct(pct):
+    #         total = sum(values)
+    #         val = int(round(pct*total/100.0))
+    #         return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
+    #
+    #     return my_autopct
+    #
+    # plt.pie(category_counts, labels = ['Happy','Sad','Angry','Neutral'],
+    #         autopct =make_autopct(category_counts), shadow=False)
+    # plt.show()
+    #
+    # plt.pie(speaker_counts, labels = ['Ses01F','Ses01M','Ses02F','Ses02M','Ses03F',
+    #                                 'Ses03M','Ses04F','Ses04M','Ses05F','Ses05M'],
+    #         autopct ='%1.1f%%', shadow=False)
+    # plt.show()
+
+    preds = torch.Tensor([[0.1,0.4,0.5]])
+    label = torch.LongTensor([0])
+    weights = torch.Tensor(([0.5,0.25,0.25]))
+    print(preds.size())
+    print(label.size())
+    loss_fn = nn.CrossEntropyLoss(weight= weights)
+    loss = loss_fn(preds, label)
+    print(loss.item())
+
+    # 1.34591066837310
 
 
-            np.save(data_dir + "/mels/" + f[:-4] + ".npy", mel)
-            np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
-            mels_made += 1
-
-        i += 1
-        if i % 100 == 0:
-            print(i, " complete.")
-            print(mels_made, "mels made.")
-
-    files = find_files(data_dir + "/mels", ext = 'npy')
-    lengths = []
-    for f in files:
-
-        mel = np.load(f)
-        lengths.append(mel.shape[1])
-        # print(mel.shape)
-
-    n, bins, patches = plt.hist(lengths, bins = 22)
-    plt.xlabel('Sequence length')
-    plt.ylabel('Count')
-    plt.title(r'New histogram of sequence lengths for 4 emotional categories')
-    plt.show()
-
+    ############################################
+    #   Finding min and max intensity of mels  #
+    ############################################
     # i = 0
     # mels_made = 0
     # mel_lengths = []
