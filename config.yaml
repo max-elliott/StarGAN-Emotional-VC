@@ -2,7 +2,7 @@ model:
 
       name: "01_nospk_4040"
       num_feats: 80
-      batch_size: 32
+      batch_size: 16
       use_speaker: False
       use_dimension: False
 
