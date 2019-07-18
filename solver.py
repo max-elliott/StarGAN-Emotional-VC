@@ -134,7 +134,7 @@ class Solver(object):
             try:
                 x, labels = next(data_iter)
             except:
-                data_iter = iter(data_loader)
+                data_iter = iter(self.train_loader)
                 x, labels = next(data_iter)
 
 
