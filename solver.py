@@ -371,7 +371,7 @@ class Solver(object):
                 c_emo_id = self.model.emo_cls(x_id, x_lens)
                 c_emo_cycle = self.model.emo_cls(x_cycle, x_lens)
 
-                c_emo_real = torch.max(c_emo_fake, dim = 1)[1]
+                c_emo_real = torch.max(c_emo_real, dim = 1)[1]
                 c_emo_fake = torch.max(c_emo_fake, dim = 1)[1]
                 c_emo_id = torch.max(c_emo_id, dim = 1)[1]
                 c_emo_cycle = torch.max(c_emo_cycle, dim = 1)[1]
@@ -385,7 +385,7 @@ class Solver(object):
                 total_labels = torch.cat((total_labels, emo_labels), dim=0)
                 total_targets = torch.cat((total_targets, emo_targets), dim=0)
 
-        accuracy_real = accuracy_score(total_targets.cpu(), real_preds.cpu())
+        accuracy_real = accuracy_score(total_labels.cpu(), real_preds.cpu())
         accuracy_fake = accuracy_score(total_targets.cpu(), fake_preds.cpu())
         accuracy_id = accuracy_score(total_labels.cpu(), id_preds.cpu())
         accuracy_cycle = accuracy_score(total_labels.cpu(), cycle_preds.cpu())
@@ -393,9 +393,9 @@ class Solver(object):
         l = ["Accuracy_real","Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
 
         print('{:20} = {:.3f}'.format(l[0], accuracy_real))
-        print('{:20} = {:.3f}'.format(l[0], accuracy_fake))
-        print('{:20} = {:.3f}'.format(l[1], accuracy_id))
-        print('{:20} = {:.3f}'.format(l[2], accuracy_cycle))
+        print('{:20} = {:.3f}'.format(l[1], accuracy_fake))
+        print('{:20} = {:.3f}'.format(l[2], accuracy_id))
+        print('{:20} = {:.3f}'.format(l[3], accuracy_cycle))
 
         if self.use_tensorboard:
             self.logger.scalar_summary("Val/test_accuracy_real", accuracy_real, self.current_iter)
