@@ -87,7 +87,8 @@ class Solver(object):
         self.current_iter = self.resume_iters
 
         # Number of D/emo_cls updates for each G update
-        self.d_to_g_ratio = self.config['loss']['d_to_g_ratio']
+        self.c_to_g_ratio = self.config['loss']['c_to_g_ratio']
+        self.c_to_d_ratio = self.config['loss']['c_to_d_ratio']
 
         self.use_tensorboard = self.config['logs']['use_tensorboard']
         self.log_every = self.config['logs']['log_every']
@@ -198,32 +199,35 @@ class Solver(object):
             #############################################################
             #                    TRAIN DISCRIMINATOR                    #
             #############################################################
-            print('Training Discriminator...')
-            self.model.reset_grad()
+            if i % self.c_to_d_ratio == 0:
+                print('Training Discriminator...')
+                self.model.reset_grad()
 
-            # Get results for x_fake
-            x_fake = self.model.G(x_real, emo_targets_ones)
-            # ;;; GET NEW X_LENS HERE
+                # Get results for x_fake
+                x_fake = self.model.G(x_real, emo_targets_ones)
+                # ;;; GET NEW X_LENS HERE
 
-            # Get real/fake predictions
-            d_preds_real = self.model.D(x_real, emo_labels_ones)
-            d_preds_fake = self.model.D(x_fake.detach(), emo_targets_ones)
-            # print(x_real.size())
-            # print(x_fake.size())
+                # Get real/fake predictions
+                d_preds_real = self.model.D(x_real, emo_labels_ones)
+                d_preds_fake = self.model.D(x_fake.detach(), emo_targets_ones)
+                # print(x_real.size())
+                # print(x_fake.size())
 
-            #Calculate loss
-            grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
+                #Calculate loss
+                grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
 
-            d_loss = -d_preds_real.mean() + d_preds_fake.mean() + \
-                     self.lambda_gp * grad_penalty
+                d_loss = -d_preds_real.mean() + d_preds_fake.mean() + \
+                         self.lambda_gp * grad_penalty
 
-            d_loss.backward()
-            self.model.d_optimizer.step()
+                d_loss.backward()
+                self.model.d_optimizer.step()
+            else:
+                print("No Discriminator update this iteration.")
 
             #############################################################
             #                      TRAIN GENERATOR                      #
             #############################################################
-            if i % self.d_to_g_ratio == 0:
+            if i % self.c_to_g_ratio == 0:
                 print('Training Generator...')
 
                 self.model.reset_grad()
@@ -468,6 +472,14 @@ class Solver(object):
                 param_group['lr'] = d_lr
             for param_group in self.model.emo_cls_optimizer.param_groups:
                 param_group['lr'] = emo_lr
+
+            # All use same lr now
+            if self.use_speaker:
+                for param_group in self.model.speaker_cls_optimizer.param_groups:
+                    param_group['lr'] = emo_lr
+            if self.use_dimension:
+                for param_group in self.model.dimension_cls_optimizer.param_groups:
+                    param_group['lr'] = emo_lr
 
     def make_random_labels(self, num_domains, num_labels):
         '''

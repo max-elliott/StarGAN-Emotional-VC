@@ -1,6 +1,6 @@
 model:
 
-      name: "01_nospk_4040"
+      name: "05_nospk_4040"
       num_feats: 80
       batch_size: 16
       use_speaker: False
@@ -15,11 +15,12 @@ loss:
     lambda_cycle: 5
     lambda_id: 5
 
-    num_iters: 1000
-    num_iters_decay: 500
+    num_iters: 8000
+    num_iters_decay: 4000
     resume_iters: 0
 
-    d_to_g_ratio: 4
+    c_to_g_ratio: 8
+    c_to_d_ratio: 2
 
 optimizer:
 
@@ -41,7 +42,7 @@ logs:
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 4
+    log_every: 8
     sample_every: 50
     model_save_every: 50
 
