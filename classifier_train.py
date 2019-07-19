@@ -18,12 +18,13 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
 
-USE_GPU = False
+USE_GPU = True
 
 if USE_GPU and torch.cuda.is_available():
     device = torch.device('cuda')
 else:
     device = torch.device('cpu')
+print(device)
 
 def save_checkpoint(state, filename='./checkpoint.pth'):
 
@@ -53,7 +54,6 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
 
         total_loss = 0
 
-
         for t, (x, y) in enumerate(train_data_loader):
             model.train()  # put model to training mode
 
@@ -63,27 +63,19 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             else:
                 x_real = x.to(device=device, dtype=torch.float)
 
-
             y = y[:,0].to(device=device, dtype=torch.float)
 
-
-#             tf.summary.scalar("lr", optimiser.state_dict()['param_groups'][0]['lr'])
-            # Zero out all of the gradients for the variables which the optimiser
-            # will update.
             optimiser.zero_grad()
 
             predictions = model(x_real, x_lens)
-
             #       predictions = predictions.squeeze(0)
-
             loss = loss_fn(predictions.float(), y.long())
-
-#             tf.summary.scalar("loss", loss.item())
             loss.backward()
-
             optimiser.step()
 
             total_loss += loss.item()
+
+            print("Epoch ", e, ", iteration", t, " done.")
 
         if t % print_every == 0:
 
