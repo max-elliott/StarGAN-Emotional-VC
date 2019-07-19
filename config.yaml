@@ -8,19 +8,19 @@ model:
 
 loss:
 
-    lambda_gp: 10
+    lambda_gp: 5
     lambda_g_emo_cls: 1
     lambda_g_spk_cls: 1
     lambda_g_dim_cls: 1
-    lambda_cycle: 5
-    lambda_id: 5
+    lambda_cycle: 3
+    lambda_id: 2
 
-    num_iters: 8000
-    num_iters_decay: 4000
+    num_iters: 32000
+    num_iters_decay: 16000
     resume_iters: 0
 
-    c_to_g_ratio: 8
-    c_to_d_ratio: 2
+    c_to_g_ratio: 1
+    c_to_d_ratio: 1
 
 optimizer:
 

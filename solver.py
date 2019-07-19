@@ -43,6 +43,7 @@ class Solver(object):
         self.model_name = self.config['model']['name']
         self.set_configuration()
         self.model = model.StarGAN_emo_VC1(self.config, self.model_name)
+        self.model = nn.DataParallel(self.model)
 
         if not load_dir == None:
             self.load_checkpoint(load_dir)
@@ -159,40 +160,41 @@ class Solver(object):
             #                    TRAIN CLASSIFIERS                      #
             #############################################################
             print('Training Classifiers...')
-            self.model.reset_grad()
-            ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
-
-            # Train with x_real
-            preds_emo_real = self.model.emo_cls(x_real, x_lens)
-
-            c_emo_real_loss = ce_weighted_loss_fn(preds_emo_real, emo_labels)
-
-            c_emo_real_loss.backward()
-            self.model.emo_cls_optimizer.step()
-
-            if self.model.use_speaker:
-                self.model.reset_grad()
-
-                # Train with x_real
-                preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
-
-                c_speaker_real_loss = ce_loss_fn(preds_speaker_real, spk_labels)
-
-                c_speaker_real_loss.backward()
-                self.model.speaker_cls_optimizer.step()
-
-            if self.model.use_dimension:
-                self.model.reset_grad()
-
-                # Train with x_real
-                preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
-
-                #;;; DO FOR MULTILABEL
-                c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
-
-                c_speaker_real_loss.backward()
-                self.model.speaker_cls_optimizer.step()
-
+            # UNCOMMENT LATER
+            # self.model.reset_grad()
+            # ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
+            #
+            # # Train with x_real
+            # preds_emo_real = self.model.emo_cls(x_real, x_lens)
+            #
+            # c_emo_real_loss = ce_weighted_loss_fn(preds_emo_real, emo_labels)
+            #
+            # c_emo_real_loss.backward()
+            # self.model.emo_cls_optimizer.step()
+            #
+            # if self.model.use_speaker:
+            #     self.model.reset_grad()
+            #
+            #     # Train with x_real
+            #     preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
+            #
+            #     c_speaker_real_loss = ce_loss_fn(preds_speaker_real, spk_labels)
+            #
+            #     c_speaker_real_loss.backward()
+            #     self.model.speaker_cls_optimizer.step()
+            #
+            # if self.model.use_dimension:
+            #     self.model.reset_grad()
+            #
+            #     # Train with x_real
+            #     preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
+            #
+            #     #;;; DO FOR MULTILABEL
+            #     c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
+            #
+            #     c_speaker_real_loss.backward()
+            #     self.model.speaker_cls_optimizer.step()
+            # UNCOMMENT LATER
 
             # repeat above for other classifiers when implemented
 
@@ -239,7 +241,7 @@ class Solver(object):
                 x_cycle = self.model.G(x_fake, emo_labels_ones)
                 x_id = self.model.G(x_real, emo_labels_ones)
                 d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
-                preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
+                # preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens) #UNCOMMENT LATER
 
 
                 x_cycle = self.make_equal_length(x_cycle, x_real)
@@ -250,11 +252,11 @@ class Solver(object):
                 loss_g_fake = - d_preds_for_g.mean()
                 loss_cycle = l1_loss_fn(x_cycle, x_real)
                 loss_id = l1_loss_fn(x_id, x_real)
-                loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
+                # loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
                 g_loss = loss_g_fake + self.lambda_cycle * loss_cycle + \
-                                       self.lambda_id * loss_id + \
-                                       self.lambda_g_emo_cls * loss_g_emo_cls# + \
+                                       self.lambda_id * loss_id #+ \
+                                       #self.lambda_g_emo_cls * loss_g_emo_cls# + \ # UNCOMMENT LATER
                                        # self.lambda_gp * grad_penalty
                 if self.use_speaker:
 
@@ -268,10 +270,6 @@ class Solver(object):
                     loss_g_dim_cls = ce_loss_fn(preds_dim_fake, dim_labels)
                     g_loss += self.lambda_g_dim_cls * loss_g_dim_cls
 
-
-
-
-
                 g_loss.backward()
                 self.model.g_optimizer.step()
             else:
@@ -280,15 +278,12 @@ class Solver(object):
             #############################################################
             #                  PRINTING/LOGGING/SAVING                  #
             #############################################################
-            elapsed = datetime.now() - start_time
-            print('{} elapsed. Iteration {:04} complete'.format(elapsed, i))
-
             if i % self.log_every == 0:
                 loss = {}
                 loss['C/emo_real_loss'] = c_emo_real_loss.item()
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
-                loss['G/emo_loss'] = loss_g_emo_cls.item()
+                # loss['G/emo_loss'] = loss_g_emo_cls.item() #UNCOMMENT LATER
                 loss['D/gradient_penalty'] = grad_penalty.item()
                 loss['G/loss_cycle'] = loss_cycle.item()
                 loss['G/loss_id'] = loss_id.item()
@@ -320,11 +315,14 @@ class Solver(object):
 
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                self.test()
+                # self.test() #UNCOMMENT LATER
                 self.sample_at_training()
 
             # update learning rates
             self.update_lr(i)
+
+            elapsed = datetime.now() - start_time
+            print('{} elapsed. Iteration {:04} complete'.format(elapsed, i))
 
         self.model.save(save_dir = self.model_save_dir, iter = self.current_iter)
 
