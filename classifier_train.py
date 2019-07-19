@@ -187,7 +187,10 @@ if __name__=='__main__':
     model = classifiers.Emotion_Classifier(input_size, hidden_size,
                      num_layers = num_layers, num_classes = num_classes, bi = True)
     optimiser = optim.Adam(model.parameters(), lr=0.0001, weight_decay = 0.000001)
-    loss_fn = nn.CrossEntropyLoss()
+
+    emo_loss_weights = torch.Tensor([4040./549, 4040./890,
+                                         4040./996, 4040./1605]).to(device)
+    loss_fn = nn.CrossEntropyLoss(weight = emo_loss_weights)
 
     print("Running training")
     train_model(model, optimiser, train_loader, test_loader, loss_fn,
