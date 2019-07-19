@@ -71,10 +71,10 @@ class Emotion_Classifier(nn.Module):
                                                    enforce_sorted=True)
 
         h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         #LSTM returns: (seq_len, batch, num_directions * hidden_size),
         #              ((num_layers * num_directions, batch, hidden_size), c_n)

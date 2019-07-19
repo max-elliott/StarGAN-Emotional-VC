@@ -5,10 +5,12 @@ import torch.optim as optim
 import torch.nn.functional as F
 import random
 import os
+import yaml
 
 import audio_utils
 import my_dataset
 import classifiers
+from my_dataset import get_filenames
 
 import torchvision
 import sklearn
@@ -16,7 +18,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
 
-USE_GPU = True
+USE_GPU = False
 
 if USE_GPU and torch.cuda.is_available():
     device = torch.device('cuda')
@@ -56,10 +58,10 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             model.train()  # put model to training mode
 
             if(var_len_data):
-                x_real = x[0].to(device = self.device).unsqueeze(1)
-                x_lens = x[1].to(device = self.device)
+                x_real = x[0].to(device = device).unsqueeze(1)
+                x_lens = x[1].to(device = device)
             else:
-                x = x.to(device=device, dtype=torch.float)
+                x_real = x.to(device=device, dtype=torch.float)
 
 
             y = y[:,0].to(device=device, dtype=torch.float)
@@ -70,7 +72,7 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             # will update.
             optimiser.zero_grad()
 
-            predictions = model(x)
+            predictions = model(x_real, x_lens)
 
             #       predictions = predictions.squeeze(0)
 
@@ -125,15 +127,15 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
     for i, (x,y) in enumerate(test_loader):
 
         if(var_len_data):
-            x_real = x[0].to(device = self.device).unsqueeze(1)
-            x_lens = x[1].to(device = self.device)
+            x_real = x[0].to(device = device).unsqueeze(1)
+            x_lens = x[1].to(device = device)
         else:
-            x = x.to(device=device, dtype=torch.float)
+            x_real = x.to(device=device, dtype=torch.float)
 
 
         y = y[:,0].to(device=device, dtype=torch.float)
 
-        preds = model(x)
+        preds = model(x_real, x_lens)
 
         preds = torch.max(preds, dim = 1)[1]
 
@@ -182,7 +184,7 @@ if __name__=='__main__':
     train_dataset = my_dataset.MyDataset(config, train_files)
     test_dataset = my_dataset.MyDataset(config, test_files)
 
-    batch_size = 2
+    batch_size = 32
 
     train_loader, test_loader = my_dataset.make_variable_dataloader(train_dataset,
                                                                     test_dataset,
