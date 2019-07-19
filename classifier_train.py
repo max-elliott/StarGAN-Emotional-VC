@@ -125,7 +125,7 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
             x_real = x.to(device=device, dtype=torch.float)
 
 
-        y = y[:,0].to(device=device, dtype=torch.float)
+        y = y[:,0].to(device=device, dtype=torch.long)
 
         preds = model(x_real, x_lens)
 
