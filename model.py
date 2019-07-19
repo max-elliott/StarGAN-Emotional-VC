@@ -73,23 +73,23 @@ class StarGAN_emo_VC1(object):
 
         print("Building components")
 
-        self.G = Generator()
-        self.D = Discriminator()
-        self.emo_cls = Emotion_Classifier(self.num_input_feats, self.hidden_size,
+        self.G = nn.DataParallel(Generator())
+        self.D = nn.DataParallel(Discriminator())
+        self.emo_cls = nn.DataParallel(Emotion_Classifier(self.num_input_feats, self.hidden_size,
                                                     self.num_layers,
                                                     self.num_emotions,
-                                                    bi = self.bi)
+                                                    bi = self.bi))
         if self.use_speaker:
-            self.speaker_cls = Emotion_Classifier(self.num_input_feats,
+            self.speaker_cls = nn.DataParallel(Emotion_Classifier(self.num_input_feats,
                                                     self.hidden_size,
                                                     self.num_layers,
                                                     self.num_speakers,
-                                                    bi = self.bi)
+                                                    bi = self.bi))
         if self.use_dimension:
-            self.dimension_cls = Dimension_Classifier(self.num_input_feats,
+            self.dimension_cls = nn.DataParallel(Dimension_Classifier(self.num_input_feats,
                                                     self.hidden_size,
                                                     self.num_layers,
-                                                    bi = self.bi)
+                                                    bi = self.bi))
 
         print("Building optimizers")
 

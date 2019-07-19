@@ -43,7 +43,7 @@ class Solver(object):
         self.model_name = self.config['model']['name']
         self.set_configuration()
         self.model = model.StarGAN_emo_VC1(self.config, self.model_name)
-        self.model = nn.DataParallel(self.model)
+        self.model = self.model
 
         if not load_dir == None:
             self.load_checkpoint(load_dir)
