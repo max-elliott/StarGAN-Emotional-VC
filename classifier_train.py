@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import random
+import os
 
 import audio_utils
 import my_dataset
@@ -162,6 +163,8 @@ if __name__=='__main__':
     hidden_size = 128
     input_size = 80
     num_layers = 2
+
+    config = yaml.load(open('./config.yaml', 'r'))
 
     # MAKE TRAIN + TEST SPLIT
     mel_dir = os.path.join(config['data']['dataset_dir'], "mels")
