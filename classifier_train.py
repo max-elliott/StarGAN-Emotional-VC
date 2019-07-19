@@ -39,9 +39,8 @@ def load_checkpoint(model, optimiser, filename = './checkpoint.pth'):
     model.load_state_dict(checkpoint['model_state_dict'])
     optimiser.load_state_dict(checkpoint['optimiser_state_dict'])
     epoch = checkpoint['epoch']
-    loss_fn = checkpoint['loss_fn']
 
-    return model, optimiser, loss_fn, epoch
+    return model, optimiser, epoch
 
 def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
                 model_type = 'cls', epochs=1, print_every = 1, var_len_data = False, start_epoch = 1):
@@ -147,6 +146,11 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
 
 if __name__=='__main__':
 
+    parser = argparse.ArgumentParser(description='Training loop for classifier only.')
+    parser.add_argument("-c","--checkpoint", type=str, default = None,
+                    help="Directory of checkpoint to resume training from")
+    args = parser.parse_args()
+
     SEED = 42
     torch.manual_seed(SEED)
     np.random.seed(SEED)
@@ -182,16 +186,22 @@ if __name__=='__main__':
                                                                     test_dataset,
                                                                     batch_size = batch_size)
 
-
+    emo_loss_weights = torch.Tensor([4040./549, 4040./890,
+                                     4040./996, 4040./1605]).to(device)
     print("Making model")
+
     model = classifiers.Emotion_Classifier(input_size, hidden_size,
                      num_layers = num_layers, num_classes = num_classes, bi = True)
     optimiser = optim.Adam(model.parameters(), lr=0.0001, weight_decay = 0.000001)
 
-    emo_loss_weights = torch.Tensor([4040./549, 4040./890,
-                                         4040./996, 4040./1605]).to(device)
     loss_fn = nn.CrossEntropyLoss(weight = emo_loss_weights)
+    epoch = 1
+
+    if args.checkpoint is not None:
+        model, optimiser, epoch = load_checkpoint(model, optimiser, args.checkpoint)
+        print("Model loaded, resuming from epoch", epoch, ".")
+
 
     print("Running training")
     train_model(model, optimiser, train_loader, test_loader, loss_fn,
-                epochs = n_epochs, var_len_data = True)
+                epochs = n_epochs, var_len_data = True, start_epoch=epoch)
