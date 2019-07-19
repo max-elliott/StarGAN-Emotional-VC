@@ -280,7 +280,7 @@ class Solver(object):
             #############################################################
             if i % self.log_every == 0:
                 loss = {}
-                loss['C/emo_real_loss'] = c_emo_real_loss.item()
+                # loss['C/emo_real_loss'] = c_emo_real_loss.item() #UNCOMMENT LATER
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
                 # loss['G/emo_loss'] = loss_g_emo_cls.item() #UNCOMMENT LATER

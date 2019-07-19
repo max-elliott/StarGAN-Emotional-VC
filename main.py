@@ -34,9 +34,12 @@ if __name__ == '__main__':
 
     #fix seeds to get consistent results
     SEED = 42
+    torch.backend.cudnn.deterministic = True
+    torch.backend.cudnn.benchmark = False
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     random.seed(SEED)
+
 
     # Use GPU
     USE_GPU = True
