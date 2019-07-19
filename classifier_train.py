@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import random
 import os
 import yaml
+import argparse
 
 import audio_utils
 import my_dataset
@@ -40,7 +41,7 @@ def load_checkpoint(model, optimiser, filename = './checkpoint.pth'):
     optimiser.load_state_dict(checkpoint['optimiser_state_dict'])
     epoch = checkpoint['epoch']
 
-    return model, optimiser, epoch
+    return epoch
 
 def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
                 model_type = 'cls', epochs=1, print_every = 1, var_len_data = False, start_epoch = 1):
@@ -198,7 +199,7 @@ if __name__=='__main__':
     epoch = 1
 
     if args.checkpoint is not None:
-        model, optimiser, epoch = load_checkpoint(model, optimiser, args.checkpoint)
+        epoch = load_checkpoint(model, optimiser, args.checkpoint)
         print("Model loaded, resuming from epoch", epoch, ".")
 
 
