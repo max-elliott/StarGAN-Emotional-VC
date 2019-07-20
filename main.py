@@ -34,8 +34,8 @@ if __name__ == '__main__':
 
     #fix seeds to get consistent results
     SEED = 42
-    torch.backend.cudnn.deterministic = True
-    torch.backend.cudnn.benchmark = False
+    # torch.backend.cudnn.deterministic = True
+    # torch.backend.cudnn.benchmark = False
     torch.manual_seed(SEED)
     np.random.seed(SEED)
     random.seed(SEED)
@@ -57,6 +57,11 @@ if __name__ == '__main__':
     # MAKE TRAIN + TEST SPLIT
     mel_dir = os.path.join(config['data']['dataset_dir'], "mels")
     files = get_filenames(mel_dir)
+
+    #UNCOMMENT LATER
+    files = [f for f in files if os.path.basename(f)[0:6]=='Ses01F']
+    print(len(files))
+
     files = my_dataset.shuffle(files)
 
     train_test_split = config['data']['train_test_split']

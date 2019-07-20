@@ -36,7 +36,7 @@ class hyperparams(object):
         self.config = yaml.load(open('./config.yaml', 'r'))
         self.sample_set_dir = self.config['logs']['sample_dir']
 
-        self.normalise_mels = True
+        self.normalise_mels = self.config['data']['normalise_mels']
         self.max_norm_value = 3226.99139880277
         self.min_norm_value = 3.8234146815389095e-10
 
@@ -223,9 +223,11 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
 
 if __name__ == '__main__':
 
-    files = librosa.util.find_files("/Users/Max/MScProject/datasets/test_dir")
+    files = librosa.util.find_files("/Users/Max/MScProject/data/samples/originals")
     # print(files[0])
-    filepath = files[0]
-    wav = load_wav(filepath)
-    mel = wav2melspectrogram(wav)
-    save_spec_plot(mel, "None", "Test2.png")
+    for file in files:
+        wav = load_wav(file)
+        mel = wav2melspectrogram(wav)
+
+        name = os.path.basename(file)
+        save_spec_plot(mel, "None", name + ".png")

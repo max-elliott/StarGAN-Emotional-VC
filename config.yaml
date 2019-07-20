@@ -1,6 +1,6 @@
 model:
 
-      name: "05_nospk_4040"
+      name: "09_nospk_nocls_Ses01F"
       num_feats: 80
       batch_size: 16
       use_speaker: False
@@ -15,8 +15,8 @@ loss:
     lambda_cycle: 3
     lambda_id: 2
 
-    num_iters: 32000
-    num_iters_decay: 16000
+    num_iters: 3000
+    num_iters_decay: 1500
     resume_iters: 0
 
     c_to_g_ratio: 1
