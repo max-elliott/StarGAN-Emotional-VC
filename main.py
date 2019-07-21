@@ -10,7 +10,8 @@ import data_preprocessing as pp
 import audio_utils
 import my_dataset
 from my_dataset import get_filenames
-from solver import Solver
+import solver
+import solver_recon
 
 if __name__ == '__main__':
 
@@ -25,6 +26,7 @@ if __name__ == '__main__':
     parser.add_argument("-e", "--evaluate", action = 'store_true',
                     help="False = train, True = evaluate model")
     parser.add_argument("-a", "--alter", action = 'store_true')
+    parser.add_argument("-r", "--recon", action = 'store_true')
 
     args = parser.parse_args()
 
@@ -87,7 +89,11 @@ if __name__ == '__main__':
     # Run solver
     # load_dir = './checkpoints/NewSolver/00006.ckpt'
     load_dir = args.checkpoint
-    s = Solver(train_loader, test_loader, config, load_dir = load_dir)
+
+    if args.recon:
+        s = solver_recon.Solver(train_loader, test_loader, config, load_dir = load_dir)
+    else:
+        s = solver.Solver(train_loader, test_loader, config, load_dir = load_dir)
 
     if args.alter:
         s.config = config
