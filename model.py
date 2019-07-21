@@ -203,7 +203,9 @@ class StarGAN_emo_VC1(object):
 
         for state in self.d_optimizer.state.values():
             for k, v in state.items():
+                print("This called.")
                 if isinstance(v, torch.Tensor):
+                    print("called")
                     state[k] = v.cpu()
 
         if 'spk' in dictionary:
