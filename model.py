@@ -197,9 +197,10 @@ class StarGAN_emo_VC1(object):
         self.G.load_state_dict(dictionary['G'])
         self.emo_cls.load_state_dict(dictionary['emo'])
 
-        self.d_optimizer.load_state_dict(dictionary['d_opt'].cpu())
-        self.g_optimizer.load_state_dict(dictionary['g_opt'].cpu())
-        self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'].cpu())
+        dictionary['d_opt'] = {val.cpu() for val in dictionary['d_opt']}
+        self.d_optimizer.load_state_dict(dictionary['d_opt'])
+        self.g_optimizer.load_state_dict(dictionary['g_opt']
+        self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'])
 
         if 'spk' in dictionary:
             self.speaker_cls.load_state_dict(dictionary['spk'])
@@ -393,18 +394,9 @@ class Discriminator(nn.Module):
 
 if __name__ == '__main__':
 
-    import yaml
-    config = yaml.load(open('./config.yaml', 'r'))
+    # import yaml
+    # config = yaml.load(open('./config.yaml', 'r'))
 
-    print("Made config.")
-
-    model = StarGAN_emo_VC1(config, "NewTest")
-    # print(model.name)
-    # load_dir = './checkpoints/NewTest/'
-
-    # model.load(load_dir, 4)
-
-    print(model.name)
-
-    # model.save(iter = 4)
-    # model.load(load_dir, 4)
+    d = {1,2,3,4}
+    d = {v+1 for v in d}
+    print(d)
