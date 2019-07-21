@@ -201,15 +201,20 @@ class StarGAN_emo_VC1(object):
         self.g_optimizer.load_state_dict(dictionary['g_opt'])
         self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'])
 
+        for state in self.d_optimizer.state.values():
+            for k, v in state.items():
+                if isinstance(v, torch.Tensor):
+                    state[k] = v.cpu()
+
         if 'spk' in dictionary:
             self.speaker_cls.load_state_dict(dictionary['spk'])
-            self.speaker_cls_optimizer.load_state_dict(dictionary['spk_opt'].cpu())
+            self.speaker_cls_optimizer.load_state_dict(dictionary['spk_opt'])
             self.use_speaker = True
         else:
             self.use_speaker = False
         if 'dim' in dictionary:
             self.dimension_cls.load_state_dict(dictionary['dim'])
-            self.dimension_cls_optimizer.load_state_dict(dictionary['dim_opt'].cpu())
+            self.dimension_cls_optimizer.load_state_dict(dictionary['dim_opt'])
             self.use_dimension = True
         else:
             self.use_dimension = False
