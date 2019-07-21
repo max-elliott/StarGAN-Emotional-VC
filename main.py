@@ -72,6 +72,8 @@ if __name__ == '__main__':
 
     print(len(train_files))
     print(len(test_files))
+    # print(train_files[0:20])
+    print(test_files)
 
     train_dataset = my_dataset.MyDataset(config, train_files)
     test_dataset = my_dataset.MyDataset(config, test_files)

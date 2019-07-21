@@ -103,7 +103,7 @@ class Solver(object):
         self.model_name = self.config['model']['name']
 
         if self.use_tensorboard:
-            self.logger = Logger(self.config['logs']['log_dir'], self.model_name)        
+            self.logger = Logger(self.config['logs']['log_dir'], self.model_name)
 
     def train(self):
         '''
@@ -201,30 +201,30 @@ class Solver(object):
             #############################################################
             #                    TRAIN DISCRIMINATOR                    #
             #############################################################
-            if i % self.c_to_d_ratio == 0:
-                print('Training Discriminator...')
-                self.model.reset_grad()
-
-                # Get results for x_fake
-                x_fake = self.model.G(x_real, emo_targets_ones)
-                # ;;; GET NEW X_LENS HERE
-
-                # Get real/fake predictions
-                d_preds_real = self.model.D(x_real, emo_labels_ones)
-                d_preds_fake = self.model.D(x_fake.detach(), emo_targets_ones)
-                # print(x_real.size())
-                # print(x_fake.size())
-
-                #Calculate loss
-                grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
-
-                d_loss = -d_preds_real.mean() + d_preds_fake.mean() + \
-                         self.lambda_gp * grad_penalty
-
-                d_loss.backward()
-                self.model.d_optimizer.step()
-            else:
-                print("No Discriminator update this iteration.")
+            # if i % self.c_to_d_ratio == 0:
+            #     print('Training Discriminator...')
+            #     self.model.reset_grad()
+            #
+            #     # Get results for x_fake
+            #     x_fake = self.model.G(x_real, emo_targets_ones)
+            #     # ;;; GET NEW X_LENS HERE
+            #
+            #     # Get real/fake predictions
+            #     d_preds_real = self.model.D(x_real, emo_labels_ones)
+            #     d_preds_fake = self.model.D(x_fake.detach(), emo_targets_ones)
+            #     # print(x_real.size())
+            #     # print(x_fake.size())
+            #
+            #     #Calculate loss
+            #     grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
+            #
+            #     d_loss = -d_preds_real.mean() + d_preds_fake.mean() + \
+            #              self.lambda_gp * grad_penalty
+            #
+            #     d_loss.backward()
+            #     self.model.d_optimizer.step()
+            # else:
+            #     print("No Discriminator update this iteration.")
 
             #############################################################
             #                      TRAIN GENERATOR                      #
@@ -238,26 +238,18 @@ class Solver(object):
                 # ;;; GET NEW X_LENS HERE
                 x_fake_lens = x_lens
 
-                x_cycle = self.model.G(x_fake, emo_labels_ones)
                 x_id = self.model.G(x_real, emo_labels_ones)
-                d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
-                # preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens) #UNCOMMENT LATER
 
 
-                x_cycle = self.make_equal_length(x_cycle, x_real)
+
                 x_id = self.make_equal_length(x_id, x_real)
 
                 l1_loss_fn = nn.L1Loss()
 
-                loss_g_fake = - d_preds_for_g.mean()
-                loss_cycle = l1_loss_fn(x_cycle, x_real)
-                loss_id = l1_loss_fn(x_id, x_real)
+                g_loss = l1_loss_fn(x_id, x_real)
                 # loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
-                g_loss = loss_g_fake + self.lambda_cycle * loss_cycle + \
-                                       self.lambda_id * loss_id #+ \
-                                       #self.lambda_g_emo_cls * loss_g_emo_cls# + \ # UNCOMMENT LATER
-                                       # self.lambda_gp * grad_penalty
+
                 if self.use_speaker:
 
                     preds_spk_fake = self.model.speaker_cls(x_fake, x_fake_lens)
@@ -281,14 +273,8 @@ class Solver(object):
             if i % self.log_every == 0:
                 loss = {}
                 # loss['C/emo_real_loss'] = c_emo_real_loss.item() #UNCOMMENT LATER
-                loss['D/total_loss'] = d_loss.item()
+
                 loss['G/total_loss'] = g_loss.item()
-                # loss['G/emo_loss'] = loss_g_emo_cls.item() #UNCOMMENT LATER
-                loss['D/gradient_penalty'] = grad_penalty.item()
-                loss['G/loss_cycle'] = loss_cycle.item()
-                loss['G/loss_id'] = loss_id.item()
-                loss['D/preds_real'] = d_preds_real.mean().item()
-                loss['D/preds_fake'] = d_preds_fake.mean().item()
 
                 if self.use_speaker:
                     loss['C/spk_real_loss'] = c_speaker_real_loss.item()
