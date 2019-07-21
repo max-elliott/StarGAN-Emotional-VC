@@ -197,16 +197,14 @@ class StarGAN_emo_VC1(object):
         self.G.load_state_dict(dictionary['G'])
         self.emo_cls.load_state_dict(dictionary['emo'])
 
-        self.d_optimizer.load_state_dict(dictionary['d_opt'])
-        self.g_optimizer.load_state_dict(dictionary['g_opt'])
-        self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'])
+        # self.d_optimizer.load_state_dict(dictionary['d_opt'])
+        # self.g_optimizer.load_state_dict(dictionary['g_opt'])
+        # self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'])
 
-        for state in self.d_optimizer.state.values():
-            for k, v in state.items():
-                print(k)
-                if isinstance(v, torch.Tensor):
-                    print("called")
-                    state[k] = v.cpu()
+        con_opt = self.config['optimizer']
+        self.g_optimizer = torch.optim.Adam(self.G.parameters(), con_opt['g_lr'], [con_opt['beta1'], con_opt['beta2']])
+        self.d_optimizer = torch.optim.Adam(self.D.parameters(), con_opt['d_lr'], [con_opt['beta1'], con_opt['beta2']])
+        self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
 
         if 'spk' in dictionary:
             self.speaker_cls.load_state_dict(dictionary['spk'])
