@@ -197,7 +197,6 @@ class StarGAN_emo_VC1(object):
         self.G.load_state_dict(dictionary['G'])
         self.emo_cls.load_state_dict(dictionary['emo'])
 
-        dictionary['d_opt'] = {val.cpu() for val in dictionary['d_opt']}
         self.d_optimizer.load_state_dict(dictionary['d_opt'])
         self.g_optimizer.load_state_dict(dictionary['g_opt'])
         self.emo_cls_optimizer.load_state_dict(dictionary['emo_opt'])
