@@ -24,6 +24,7 @@ if __name__ == '__main__':
                     help="Set utterance length if using fixed lengths")
     parser.add_argument("-e", "--evaluate", action = 'store_true',
                     help="False = train, True = evaluate model")
+    parser.add_argument("-a", "--alter", action = 'store_true')
 
     args = parser.parse_args()
 
@@ -85,6 +86,10 @@ if __name__ == '__main__':
     # load_dir = './checkpoints/NewSolver/00006.ckpt'
     load_dir = args.checkpoint
     s = Solver(train_loader, test_loader, config, load_dir = load_dir)
+
+    if args.alter:
+        s.config = config
+        s.set_configuration()
 
     if not args.evaluate:
         s.train()

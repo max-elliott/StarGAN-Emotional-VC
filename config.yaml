@@ -1,6 +1,6 @@
 model:
 
-      name: "09_nospk_nocls_Ses01F"
+      name: "09_nospk_nocls_Ses01F_r1"
       num_feats: 80
       batch_size: 16
       use_speaker: False
@@ -15,9 +15,9 @@ loss:
     lambda_cycle: 3
     lambda_id: 2
 
-    num_iters: 3000
-    num_iters_decay: 1500
-    resume_iters: 0
+    num_iters: 6000
+    num_iters_decay: 3000
+    resume_iters: 3000
 
     c_to_g_ratio: 1
     c_to_d_ratio: 1
@@ -27,11 +27,11 @@ optimizer:
     beta1: 0.9
     beta2: 0.999
 
-    g_lr: 0.0001
-    d_lr: 0.0001
-    emo_cls_lr: 0.0001
-    speaker_cls_lr: 0.0001
-    dim_cls_lr: 0.0001
+    g_lr: 0.00001
+    d_lr: 0.00001
+    emo_cls_lr: 0.00001
+    speaker_cls_lr: 0.00001
+    dim_cls_lr: 0.00001
 
 
 logs:
