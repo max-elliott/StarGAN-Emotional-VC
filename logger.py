@@ -1,7 +1,6 @@
 '''
-Written by hujinsen. Original source can be found at:
+Altered version of Logger.py by hujinsen. Original source can be found at:
     https://github.com/hujinsen/pytorch-StarGAN-VC
-    Doesn't currently work
 '''
 import tensorflow as tf
 
