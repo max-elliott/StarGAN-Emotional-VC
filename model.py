@@ -331,7 +331,7 @@ class Generator(nn.Module):
         super(Generator, self).__init__()
         self.unet = unet_model.UNet(1,1)
 
-    def forward(self, x, x_lens, c):
+    def forward(self, x, c):
         x = self.unet(x)
         return x
 
