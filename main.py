@@ -91,15 +91,19 @@ if __name__ == '__main__':
     load_dir = args.checkpoint
 
     if args.recon:
+        print("Performing reconstructoin training.")
         s = solver_recon.Solver(train_loader, test_loader, config, load_dir = load_dir)
     else:
+        print("Performing whole network training.")
         s = solver.Solver(train_loader, test_loader, config, load_dir = load_dir)
 
     if args.alter:
+        print("Changing loaded config to new config.")
         s.config = config
         s.set_configuration()
 
     if not args.evaluate:
+        print("Training model.")
         s.train()
     else:
         print("No training. Model loaded in evaluation mode.")

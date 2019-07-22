@@ -8,6 +8,7 @@ import os
 from classifiers import *
 from average_weighted_attention import Average_Weighted_Attention
 
+import unet.unet_model as unet_model
 
 class StarGAN_emo_VC1(object):
     '''
@@ -264,65 +265,74 @@ class Up2d(nn.Module):
         return x3
 
 
+# class Generator(nn.Module):
+#     """docstring for Generator."""
+#     def __init__(self):
+#         super(Generator, self).__init__()
+#         # self.downsample = nn.Sequential(
+#         self.down1 = Down2d(1, 32, (9,3), (1,1), (4,1))
+#         self.down2 = Down2d(32, 64, (8,4), (2,2), (3,1))
+#         self.down3 = Down2d(64, 128, (8,4), (2,2), (3,1))
+#         self.down4 = Down2d(128, 64, (5,3), (1,1), (2,1))
+#         self.down5 = Down2d(64, 5, (5,10), (1,10), (2,1))
+#         # )
+#
+#
+#         self.up1 = Up2d(9, 64, (5,10), (1,10), (2,0))
+#         self.up2 = Up2d(68, 128, (5,3), (1,1), (2,1))
+#         self.up3 = Up2d(132, 64, (8,4), (2,2), (3,1))
+#         self.up4 = Up2d(68, 32, (8,4), (2,2), (3,1))
+#
+#         self.deconv = nn.ConvTranspose2d(36, 1, (9,3), (1,1), (4,1))
+#
+#     def forward(self, x, c):
+#         # x = x.unsqueeze(1)
+#         # x = self.downsample(x)
+#
+#         x = self.down1(x)
+#         # print(x.size())
+#         x = self.down2(x)
+#         # print(x.size())
+#         x = self.down3(x)
+#         # print(x.size())
+#         x = self.down4(x)
+#         # print(x.size())
+#         x = self.down5(x)
+#         # print(x.size())
+#
+#         c = c.view(c.size(0), c.size(1), 1, 1)
+#
+#
+#         c1 = c.repeat(1, 1, x.size(2), x.size(3))
+#
+#         x = torch.cat([x, c1], dim=1)
+#
+#         x = self.up1(x)
+#
+#         c2 = c.repeat(1,1,x.size(2), x.size(3))
+#         x = torch.cat([x, c2], dim=1)
+#         x = self.up2(x)
+#
+#         c3 = c.repeat(1,1,x.size(2), x.size(3))
+#         x = torch.cat([x, c3], dim=1)
+#         x = self.up3(x)
+#
+#         c4 = c.repeat(1,1,x.size(2), x.size(3))
+#         x = torch.cat([x, c4], dim=1)
+#         x = self.up4(x)
+#
+#         c5 = c.repeat(1,1, x.size(2), x.size(3))
+#         x = torch.cat([x, c5], dim=1)
+#         x = self.deconv(x)
+#         return x
+
 class Generator(nn.Module):
-    """docstring for Generator."""
     def __init__(self):
         super(Generator, self).__init__()
-        # self.downsample = nn.Sequential(
-        self.down1 = Down2d(1, 32, (9,3), (1,1), (4,1))
-        self.down2 = Down2d(32, 64, (8,4), (2,2), (3,1))
-        self.down3 = Down2d(64, 128, (8,4), (2,2), (3,1))
-        self.down4 = Down2d(128, 64, (5,3), (1,1), (2,1))
-        self.down5 = Down2d(64, 5, (5,10), (1,10), (2,1))
-        # )
+        self.unet = unet_model.UNet(1,1)
 
-
-        self.up1 = Up2d(9, 64, (5,10), (1,10), (2,0))
-        self.up2 = Up2d(68, 128, (5,3), (1,1), (2,1))
-        self.up3 = Up2d(132, 64, (8,4), (2,2), (3,1))
-        self.up4 = Up2d(68, 32, (8,4), (2,2), (3,1))
-
-        self.deconv = nn.ConvTranspose2d(36, 1, (9,3), (1,1), (4,1))
-
-    def forward(self, x, c):
-        # x = x.unsqueeze(1)
-        # x = self.downsample(x)
-
-        x = self.down1(x)
-        # print(x.size())
-        x = self.down2(x)
-        # print(x.size())
-        x = self.down3(x)
-        # print(x.size())
-        x = self.down4(x)
-        # print(x.size())
-        x = self.down5(x)
-        # print(x.size())
-
-        c = c.view(c.size(0), c.size(1), 1, 1)
-
-
-        c1 = c.repeat(1, 1, x.size(2), x.size(3))
-
-        x = torch.cat([x, c1], dim=1)
-
-        x = self.up1(x)
-
-        c2 = c.repeat(1,1,x.size(2), x.size(3))
-        x = torch.cat([x, c2], dim=1)
-        x = self.up2(x)
-
-        c3 = c.repeat(1,1,x.size(2), x.size(3))
-        x = torch.cat([x, c3], dim=1)
-        x = self.up3(x)
-
-        c4 = c.repeat(1,1,x.size(2), x.size(3))
-        x = torch.cat([x, c4], dim=1)
-        x = self.up4(x)
-
-        c5 = c.repeat(1,1, x.size(2), x.size(3))
-        x = torch.cat([x, c5], dim=1)
-        x = self.deconv(x)
+    def forward(x, x_lens, c):
+        x = self.unet(x)
         return x
 
 

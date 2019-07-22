@@ -119,13 +119,21 @@ def collate_length_order(batch):
 
     max_len = sequences_padded.size(1)
     # print("Original size = ", max_len)
-    div8 = max_len%8==0
-    div5 = max_len%5==0
-    div9 = max_len%3==0
-    if not (div8 and div5 and div9):
+    # div8 = max_len%8==0
+    # div5 = max_len%5==0
+    # div9 = max_len%3==0
+    # if not (div8 and div5 and div9):
+    #     pad_len = max_len + 1
+    #     # print("Current pad:", pad_len)
+    #     while (pad_len%8 !=0 or pad_len%5!=0 or pad_len%3!=0):
+    #         pad_len += 1
+    #         # print("Current pad:", pad_len%9)
+    div16 = max_len%16==0
+
+    if not div16:
         pad_len = max_len + 1
         # print("Current pad:", pad_len)
-        while (pad_len%8 !=0 or pad_len%5!=0 or pad_len%3!=0):
+        while pad_len%16 !=0:
             pad_len += 1
             # print("Current pad:", pad_len%9)
         pad_len = pad_len - max_len
