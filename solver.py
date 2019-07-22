@@ -103,7 +103,7 @@ class Solver(object):
         self.model_name = self.config['model']['name']
 
         if self.use_tensorboard:
-            self.logger = Logger(self.config['logs']['log_dir'], self.model_name)        
+            self.logger = Logger(self.config['logs']['log_dir'], self.model_name)
 
     def train(self):
         '''
@@ -254,8 +254,9 @@ class Solver(object):
                 loss_id = l1_loss_fn(x_id, x_real)
                 # loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
-                g_loss = loss_g_fake + self.lambda_cycle * loss_cycle + \
-                                       self.lambda_id * loss_id #+ \
+                g_loss = loss_g_fake + self.lambda_id * loss_id
+                                       # self.lambda_cycle * loss_cycle + \
+                                        #+ \
                                        #self.lambda_g_emo_cls * loss_g_emo_cls# + \ # UNCOMMENT LATER
                                        # self.lambda_gp * grad_penalty
                 if self.use_speaker:
