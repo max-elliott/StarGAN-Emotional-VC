@@ -5,7 +5,7 @@ model:
       batch_size: 16
       use_speaker: False
       use_dimension: False
-      num_classes: 4
+      num_classes: 2
 
 loss:
 
@@ -14,7 +14,7 @@ loss:
     lambda_g_spk_cls: 1
     lambda_g_dim_cls: 1
     lambda_cycle: 3
-    lambda_id: 1
+    lambda_id: 2
 
     num_iters: 2000
     num_iters_decay: 1000
