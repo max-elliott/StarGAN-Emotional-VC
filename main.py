@@ -62,8 +62,8 @@ if __name__ == '__main__':
     files = get_filenames(mel_dir)
 
     #UNCOMMENT LATER
-    files = [f for f in files if os.path.basename(f)[0:6]=='Ses01F']
-    print(len(files))
+    # files = [f for f in files if os.path.basename(f)[0:6]=='Ses01F']
+    # print(len(files))
 
     files = my_dataset.shuffle(files)
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     load_dir = args.checkpoint
 
     if args.recon:
-        print("Performing reconstructoin training.")
+        print("Performing reconstruction training.")
         s = solver_recon.Solver(train_loader, test_loader, config, load_dir = load_dir)
     else:
         print("Performing whole network training.")
