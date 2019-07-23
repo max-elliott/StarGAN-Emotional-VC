@@ -62,8 +62,9 @@ if __name__ == '__main__':
     files = get_filenames(mel_dir)
 
     #UNCOMMENT LATER
-    # files = [f for f in files if os.path.basename(f)[0:6]=='Ses01F']
-    # print(len(files))
+    sessions = ['Ses01F', 'Ses01M', 'Ses02F', 'Ses02M', 'Ses03F', 'Ses03M']
+    files = [f for f in files if os.path.basename(f)[0:6] in sessions]
+    print(len(files), " files used.")
 
     files = my_dataset.shuffle(files)
 

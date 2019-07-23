@@ -411,6 +411,8 @@ if __name__ == '__main__':
     # import yaml
     # config = yaml.load(open('./config.yaml', 'r'))
 
-    d = {1,2,3,4}
-    d = {v+1 for v in d}
-    print(d)
+    l = [0,0,0,1,2,3,4,5]
+
+    l = [v for v in l if v in [0,1,5]]
+
+    print(l)
