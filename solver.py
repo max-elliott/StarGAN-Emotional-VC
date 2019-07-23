@@ -218,7 +218,7 @@ class Solver(object):
                 #Calculate loss
                 grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
 
-                d_loss = -d_preds_real.mean() + d_preds_fake.mean() + \
+                d_loss = 0.5*(-d_preds_real.mean() + d_preds_fake.mean()) + \
                          self.lambda_gp * grad_penalty
 
                 d_loss.backward()
@@ -238,19 +238,19 @@ class Solver(object):
                 # ;;; GET NEW X_LENS HERE
                 x_fake_lens = x_lens
 
-                x_cycle = self.model.G(x_fake, emo_labels_ones)
+                # x_cycle = self.model.G(x_fake, emo_labels_ones)
                 x_id = self.model.G(x_real, emo_labels_ones)
                 d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
                 # preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens) #UNCOMMENT LATER
 
 
-                x_cycle = self.make_equal_length(x_cycle, x_real)
+                # x_cycle = self.make_equal_length(x_cycle, x_real)
                 x_id = self.make_equal_length(x_id, x_real)
 
                 l1_loss_fn = nn.L1Loss()
 
                 loss_g_fake = - d_preds_for_g.mean()
-                loss_cycle = l1_loss_fn(x_cycle, x_real)
+                # loss_cycle = l1_loss_fn(x_cycle, x_real)
                 loss_id = l1_loss_fn(x_id, x_real)
                 # loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
@@ -286,7 +286,7 @@ class Solver(object):
                 loss['G/total_loss'] = g_loss.item()
                 # loss['G/emo_loss'] = loss_g_emo_cls.item() #UNCOMMENT LATER
                 loss['D/gradient_penalty'] = grad_penalty.item()
-                loss['G/loss_cycle'] = loss_cycle.item()
+                # loss['G/loss_cycle'] = loss_cycle.item()
                 loss['G/loss_id'] = loss_id.item()
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()
