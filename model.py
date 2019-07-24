@@ -74,20 +74,23 @@ class StarGAN_emo_VC1(object):
 
         print("Building components")
 
-        self.G = nn.DataParallel(Generator())
+        if config['data']['type'] == 'mel':
+            self.G = nn.DataParallel(Generator_Mel())
+        else:
+            self.G = nn.DataParallel(Generator_World())
         self.D = nn.DataParallel(Discriminator())
         self.emo_cls = nn.DataParallel(Emotion_Classifier(self.num_input_feats, self.hidden_size,
                                                     self.num_layers,
                                                     self.num_emotions,
                                                     bi = self.bi))
-        if self.use_speaker:
-            self.speaker_cls = nn.DataParallel(Emotion_Classifier(self.num_input_feats,
+
+        self.speaker_cls = nn.DataParallel(Emotion_Classifier(self.num_input_feats,
                                                     self.hidden_size,
                                                     self.num_layers,
                                                     self.num_speakers,
                                                     bi = self.bi))
-        if self.use_dimension:
-            self.dimension_cls = nn.DataParallel(Dimension_Classifier(self.num_input_feats,
+
+        self.dimension_cls = nn.DataParallel(Dimension_Classifier(self.num_input_feats,
                                                     self.hidden_size,
                                                     self.num_layers,
                                                     bi = self.bi))
@@ -265,68 +268,79 @@ class Up2d(nn.Module):
         return x3
 
 
-# class Generator(nn.Module):
-#     """docstring for Generator."""
-#     def __init__(self):
-#         super(Generator, self).__init__()
-#         # self.downsample = nn.Sequential(
-#         self.down1 = Down2d(1, 32, (9,3), (1,1), (4,1))
-#         self.down2 = Down2d(32, 64, (8,4), (2,2), (3,1))
-#         self.down3 = Down2d(64, 128, (8,4), (2,2), (3,1))
-#         self.down4 = Down2d(128, 64, (5,3), (1,1), (2,1))
-#         self.down5 = Down2d(64, 5, (5,10), (1,10), (2,1))
-#         # )
-#
-#
-#         self.up1 = Up2d(9, 64, (5,10), (1,10), (2,0))
-#         self.up2 = Up2d(68, 128, (5,3), (1,1), (2,1))
-#         self.up3 = Up2d(132, 64, (8,4), (2,2), (3,1))
-#         self.up4 = Up2d(68, 32, (8,4), (2,2), (3,1))
-#
-#         self.deconv = nn.ConvTranspose2d(36, 1, (9,3), (1,1), (4,1))
-#
-#     def forward(self, x, c):
-#         # x = x.unsqueeze(1)
-#         # x = self.downsample(x)
-#
-#         x = self.down1(x)
-#         # print(x.size())
-#         x = self.down2(x)
-#         # print(x.size())
-#         x = self.down3(x)
-#         # print(x.size())
-#         x = self.down4(x)
-#         # print(x.size())
-#         x = self.down5(x)
-#         # print(x.size())
-#
-#         c = c.view(c.size(0), c.size(1), 1, 1)
-#
-#
-#         c1 = c.repeat(1, 1, x.size(2), x.size(3))
-#
-#         x = torch.cat([x, c1], dim=1)
-#
-#         x = self.up1(x)
-#
-#         c2 = c.repeat(1,1,x.size(2), x.size(3))
-#         x = torch.cat([x, c2], dim=1)
-#         x = self.up2(x)
-#
-#         c3 = c.repeat(1,1,x.size(2), x.size(3))
-#         x = torch.cat([x, c3], dim=1)
-#         x = self.up3(x)
-#
-#         c4 = c.repeat(1,1,x.size(2), x.size(3))
-#         x = torch.cat([x, c4], dim=1)
-#         x = self.up4(x)
-#
-#         c5 = c.repeat(1,1, x.size(2), x.size(3))
-#         x = torch.cat([x, c5], dim=1)
-#         x = self.deconv(x)
-#         return x
+class Generator_World(nn.Module):
+    """docstring for Generator."""
+    def __init__(self):
+        super(Generator, self).__init__()
+        # self.downsample = nn.Sequential(
+        self.down1 = Down2d(1, 32, (3,9), (1,1), (1,4))   #36
+        self.down2 = Down2d(32, 64, (4,8), (2,2), (1,3))  #18
+        self.down3 = Down2d(64, 128, (4,8), (2,2), (1,3)) #8
+        self.down4 = Down2d(128, 64, (3,5), (1,1), (1,2)) #8
+        self.down5 = Down2d(64, 5, (8,5), (8,1), (0,2))   #1
 
-class Generator(nn.Module):
+        self.up1 = Up2d(9, 64, (8,5), (8,1), (0,2))
+        self.up2 = Up2d(68, 128, (3,5), (1,1), (1,2))
+        self.up3 = Up2d(132, 64, (4,8), (2,2), (1,3))
+        self.up4 = Up2d(68, 32, (4,8), (2,2), (1,3))
+        self.deconv = nn.ConvTranspose2d(36, 1, (3,9), (1,1), (1,4))
+
+        # self.down1 = Down2d(1, 32, (9,3), (1,1), (4,1))
+        # self.down2 = Down2d(32, 64, (8,4), (2,2), (3,1))
+        # self.down3 = Down2d(64, 128, (8,4), (2,2), (3,1))
+        # self.down4 = Down2d(128, 64, (5,3), (1,1), (2,1))
+        # self.down5 = Down2d(64, 5, (5,10), (1,10), (2,1))
+        #
+        #
+        # self.up1 = Up2d(9, 64, (5,10), (1,10), (2,0))
+        # self.up2 = Up2d(68, 128, (5,3), (1,1), (2,1))
+        # self.up3 = Up2d(132, 64, (8,4), (2,2), (3,1))
+        # self.up4 = Up2d(68, 32, (8,4), (2,2), (3,1))
+        #
+        # self.deconv = nn.ConvTranspose2d(36, 1, (9,3), (1,1), (4,1))
+
+    def forward(self, x, c):
+        # x = x.unsqueeze(1)
+        # x = self.downsample(x)
+
+        x = self.down1(x)
+        # print(x.size())
+        x = self.down2(x)
+        # print(x.size())
+        x = self.down3(x)
+        # print(x.size())
+        x = self.down4(x)
+        # print(x.size())
+        x = self.down5(x)
+        # print(x.size())
+
+        c = c.view(c.size(0), c.size(1), 1, 1)
+
+
+        c1 = c.repeat(1, 1, x.size(2), x.size(3))
+
+        x = torch.cat([x, c1], dim=1)
+
+        x = self.up1(x)
+
+        c2 = c.repeat(1,1,x.size(2), x.size(3))
+        x = torch.cat([x, c2], dim=1)
+        x = self.up2(x)
+
+        c3 = c.repeat(1,1,x.size(2), x.size(3))
+        x = torch.cat([x, c3], dim=1)
+        x = self.up3(x)
+
+        c4 = c.repeat(1,1,x.size(2), x.size(3))
+        x = torch.cat([x, c4], dim=1)
+        x = self.up4(x)
+
+        c5 = c.repeat(1,1, x.size(2), x.size(3))
+        x = torch.cat([x, c5], dim=1)
+        x = self.deconv(x)
+        return x
+
+class Generator_Mel(nn.Module):
     def __init__(self):
         super(Generator, self).__init__()
         self.unet = unet_model.UNet(1,1)
@@ -341,12 +355,19 @@ class Discriminator(nn.Module):
     def __init__(self):
         super(Discriminator, self).__init__()
 
-        self.d1 = Down2d(5, 32, (9,3), (1,1), (4,1))
-        self.d2 = Down2d(36, 32, (8,3), (2,1), (3,1))
-        self.d3 = Down2d(36, 32, (8,3), (2,1), (3,1))
-        self.d4 = Down2d(36, 32, (6,3), (2,1), (2,1))
+        # self.d1 = Down2d(5, 32, (9,3), (1,1), (4,1))
+        # self.d2 = Down2d(36, 32, (8,3), (2,1), (3,1))
+        # self.d3 = Down2d(36, 32, (8,3), (2,1), (3,1))
+        # self.d4 = Down2d(36, 32, (6,3), (2,1), (2,1))
+        #
+        # self.conv = nn.Conv2d(36, 1, (8,8), (8,8), (2,0))
 
-        self.conv = nn.Conv2d(36, 1, (8,8), (8,8), (2,0))
+        self.d1 = Down2d(5, 32, (3,9), (1,1), (1,4))
+        self.d2 = Down2d(36, 32, (3,8), (1,2), (1,3))
+        self.d3 = Down2d(36, 32, (3,8), (1,2), (1,3))
+        self.d4 = Down2d(36, 32, (3,6), (1,2), (1,2))
+
+        self.conv = nn.Conv2d(36, 1, (8,8), (8,8), (0,2))
         self.pool = nn.AdaptiveAvgPool2d(1)
 
     def forward(self, x, c):

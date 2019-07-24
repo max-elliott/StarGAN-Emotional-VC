@@ -27,6 +27,7 @@ if __name__ == '__main__':
                     help="False = train, True = evaluate model")
     parser.add_argument("-a", "--alter", action = 'store_true')
     parser.add_argument("-r", "--recon", action = 'store_true')
+    parser.add_argument("-w", "--world", action = 'store_true')
 
     args = parser.parse_args()
 
@@ -57,11 +58,20 @@ if __name__ == '__main__':
     print(torch.__version__)
     print(torch.cuda)
 
-    # MAKE TRAIN + TEST SPLIT
-    mel_dir = os.path.join(config['data']['dataset_dir'], "mels")
-    files = get_filenames(mel_dir)
+    # Get correct data directory depending on features being used
+    if args.world:
+        print("Using WORLD features.")
+        config['model']['num_feats'] = 36
+        config['data']['type'] = 'world'
+        data_dir = os.path.join(config['data']['dataset_dir'], "world")
+    else:
+        print("Using mel spectrograms.")
+        config['data']['type'] = 'mel'
+        data_dir = os.path.join(config['data']['dataset_dir'], "mels")
 
-    #UNCOMMENT LATER
+    # MAKE TRAIN + TEST SPLIT
+    files = get_filenames(data_dir)
+
     sessions = ['Ses01F', 'Ses01M', 'Ses02F', 'Ses02M', 'Ses03F', 'Ses03M']
     files = [f for f in files if os.path.basename(f)[0:6] in sessions]
     print(len(files), " files used.")

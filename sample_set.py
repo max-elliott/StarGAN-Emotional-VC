@@ -2,7 +2,8 @@ import os
 import yaml
 
 import audio_utils
-import data_preprocessing as pp
+import data_preprocessing2 as pp
+import preprocess_world as pw
 
 import torch
 import librosa
@@ -24,12 +25,23 @@ class Sample_Set():
             if filename[-1] == '/':
                 filename = filename[0:-1]
 
-            audio, labels = pp.get_samples_and_labels(filename)
+            audio, labels = pp.get_samples_and_labels(filename, config)
 
-            spec = torch.Tensor(audio_utils.wav2spectrogram(audio)).t()
-            melspec = torch.Tensor(audio_utils.wav2melspectrogram(audio)).t()
+            if config['data']['type'] == 'mel':
 
-            self.set[filename] = [melspec, labels, spec]
+                spec = torch.Tensor(audio_utils.wav2spectrogram(audio)).t()
+                melspec = torch.Tensor(audio_utils.wav2melspectrogram(audio)).t()
+
+                self.set[filename] = [melspec, labels, spec]
+            else:
+
+                audio = np.array(audio, dtype = np.float64)
+
+                f0, ap, sp, coded_sp = cal_mcep(audio)
+                coded_sp = torch.Tensor(coded_sp.T())
+                self.set[filename] = [f0, ap, sp, coded_sp, labels]
+
+
 
     def get_set(self):
         '''

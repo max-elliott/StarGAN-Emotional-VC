@@ -110,10 +110,9 @@ def concatenate_labels(emo, speaker, dims, dims_dis):
 
     return all_labels
 
-def get_samples_and_labels(filename):
+def get_samples_and_labels(filename,config):
 
-    config = yaml.load(open('./config.yaml', 'r'))
-
+    # config = yaml.load(open('./config.yaml', 'r'))
 
     wav_path = config['data']['sample_set_dir'] + "/" + filename
     folder = filename[:-9]

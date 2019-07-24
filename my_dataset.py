@@ -77,9 +77,14 @@ class MyDataset(data_utils.Dataset):
     def __init__(self, config, filenames):
         super(MyDataset, self).__init__()
 
+        self.config  = config
         self.dataset_dir = config['data']['dataset_dir']
 
-        self.mels_dir = os.path.join(self.dataset_dir, "mels")
+        if config['data']['type'] == 'mel':
+            self.feat_dir = os.path.join(self.dataset_dir, "mels")
+        else:
+            self.feat_dir = os.path.join(self.dataset_dir, "world")
+
         self.labels_dir = os.path.join(self.dataset_dir, "labels")
 
         self.filenames = filenames
@@ -87,7 +92,7 @@ class MyDataset(data_utils.Dataset):
     def __getitem__(self, index):
 
         f = self.filenames[index]
-        mel = np.load(self.mels_dir + "/" + f + ".npy")
+        mel = np.load(self.feat_dir + "/" + f + ".npy")
         label = np.load(self.labels_dir + "/" + f + ".npy")
 
         mel = torch.FloatTensor(mel).t()

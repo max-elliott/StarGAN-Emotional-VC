@@ -53,6 +53,7 @@ data:
     sample_set_dir: '../data/samples/originals'
     train_test_split: 0.90
     normalise_mels: True
+    type: 'world'
 
 verbose: False
 device: torch.device('cuda')

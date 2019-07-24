@@ -4,9 +4,11 @@ import os
 import yaml
 import copy
 
-
 import librosa
 import librosa.display
+
+import pyworld
+from pyworld import decode_spectral_envelope, synthesize
 
 import numpy as np
 
@@ -219,6 +221,28 @@ def save_spec_plot(spec, model_name, filename, type = 'mel'):
     plt.close(fig)
     plt.close("all")
     # print("Saved.")
+
+def save_world_wav(feats, model_name, filename):
+
+    # feats = [f0, sp, ap, sp_coded, labels]
+
+    if isinstance(feats[3], torch.Tensor):
+        spec = spec.cpu().numpy()
+    if hp.normalise_mels:
+        spec = _unnormalise_coded_sp(spec)
+
+    path = os.path.join(hp.sample_set_dir, model_name)
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    path = os.path.join(path, filename)
+
+    feats[3] = np.ascontiguousarray(feats[3], dtype=np.float64)
+    decoded_sp = decode_spectral_envelope(coded_sp, hp.sr, fft_size = hp.n_fft)
+    # f0_converted = norm.pitch_conversion(f0, speaker, target)
+    wav = synthesize(feats[0], feats[3], feats[2], hp.sr)
+    audio_utils.save_wav(wav2, './samples/worldwav.wav')
 
 if __name__ == '__main__':
 

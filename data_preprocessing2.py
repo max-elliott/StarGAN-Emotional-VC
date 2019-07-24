@@ -108,6 +108,36 @@ def get_wav_and_labels(filename, data_dir):
 
     return audio, labels
 
+def get_samples_and_labels(filename, config):
+
+    # config = yaml.load(open('./config.yaml', 'r'))
+
+    wav_path = config['data']['sample_set_dir'] + "/" + filename
+    folder = filename[:-9]
+    label_path = config['data']['dataset_dir'] + "/Annotations/" + folder + ".txt"
+
+    with open(label_path, 'r') as label_file:
+
+        category = ""
+        dimensions = ""
+        speaker = ""
+
+        for row in label_file:
+            if row[0] == '[':
+                split = row.split("\t")
+                if split[1] == filename[:-4]:
+                    category = get_emotion_from_label(split[2])
+                    dimensions = cont2list(split[3])
+                    dimensions_dis = cont2list(split[3], binned = True)
+                    speaker = get_speaker_from_filename(filename)
+
+
+    audio = audio_utils.load_wav(wav_path)
+    audio = np.array(audio, dtype = np.float32)
+    labels = concatenate_labels(category, speaker, dimensions, dimensions_dis)
+
+    return audio, labels
+
 def get_filenames(data_dir):
 
     files = find_files(data_dir, ext = 'wav')
