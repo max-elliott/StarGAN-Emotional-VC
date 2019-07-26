@@ -148,13 +148,13 @@ class Solver(object):
             # ;;;;;;; GET DIM LABELS
 
             # Generate target domain labels randomly.
-            num_emos = 4
+            num_emos = self.config['model']['num_classes']
             emo_targets = self.make_random_labels(num_emos, emo_labels.size(0))
             emo_targets = emo_targets.to(device = self.device)
 
             # one-hot versions of labels
-            emo_labels_ones = F.one_hot(emo_labels, num_classes = 4).float().to(device = self.device)
-            emo_targets_ones = F.one_hot(emo_targets, num_classes = 4).float().to(device = self.device)
+            emo_labels_ones = F.one_hot(emo_labels, num_classes = num_emos).float().to(device = self.device)
+            emo_targets_ones = F.one_hot(emo_targets, num_classes = num_emos).float().to(device = self.device)
 
             #############################################################
             #                    TRAIN CLASSIFIERS                      #
@@ -316,7 +316,7 @@ class Solver(object):
 
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                # self.test() #UNCOMMENT LATER
+                self.test() #UNCOMMENT LATER
                 if self.config['data']['type'] == 'mel':
                     self.sample_mel()
                 else:
@@ -356,13 +356,13 @@ class Solver(object):
             spk_labels = labels[:,1].to(device = self.device)
 
             # Generate target domain labels randomly.
-            num_emos = 4
+            num_emos = self.config['model']['num_classes']
             emo_targets = self.make_random_labels(num_emos, emo_labels.size(0))
             emo_targets = emo_targets.to(device = self.device)
 
             # one-hot versions of labels
-            emo_labels_ones = F.one_hot(emo_labels, num_classes = 4).float().to(device = self.device)
-            emo_targets_ones = F.one_hot(emo_targets, num_classes = 4).float().to(device = self.device)
+            emo_labels_ones = F.one_hot(emo_labels, num_classes = num_emos).float().to(device = self.device)
+            emo_targets_ones = F.one_hot(emo_targets, num_classes = num_emos).float().to(device = self.device)
 
             with torch.no_grad():
 
@@ -415,17 +415,19 @@ class Solver(object):
         are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png + .npy'
         '''
 
-        print("Saving samples...")
+        print("Saving mel samples...")
 
         self.model.to_device(device = self.device)
         self.model.set_eval_mode()
 
         # Make one-hot vector for each emotion category
-        emo_labels = torch.Tensor([0,1,2,3]).long()
-        emo_targets = F.one_hot(emo_labels, num_classes = 4).float().to(device = self.device)
+        num_emos = self.config['model']['num_classes']
+        emo_labels = torch.Tensor(range(0,num_emos)).long()
+        emo_targets = F.one_hot(emo_labels, num_classes = num_emos).float().to(device = self.device)
 
         for tag, val in self.sample_set.get_set().items():
             # tag is filename, val is [mel, labels, spec]
+
             mel = val[0].unsqueeze(0).unsqueeze(0).to(device = self.device)
             labels = val[1]
 
@@ -447,42 +449,58 @@ class Solver(object):
                     audio_utils.save_spec_plot(fake.t(), self.model_name, filename_png)
                     audio_utils.save_spec(fake.t(), self.model_name, filename_npy)
 
-def sample_world(self):
-    '''
-    Passes each performance sample through G for every target emotion. They
-    are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png + .npy'
-    '''
+    def sample_world(self):
+        '''
+        Passes each performance sample through G for every target emotion. They
+        are saved to 'config(sample_dir)/model_name/filename-<emo>to<trg>.png + .npy'
+        '''
 
-    print("Saving samples...")
+        print("Saving world samples...")
 
-    self.model.to_device(device = self.device)
-    self.model.set_eval_mode()
+        self.model.to_device(device = self.device)
+        self.model.set_eval_mode()
 
-    # Make one-hot vector for each emotion category
-    emo_labels = torch.Tensor([0,1,2,3]).long()
-    emo_targets = F.one_hot(emo_labels, num_classes = 4).float().to(device = self.device)
+        # Make one-hot vector for each emotion category
+        num_emos = self.config['model']['num_classes']
+        emo_labels = torch.Tensor(range(0,num_emos)).long()
+        emo_targets = F.one_hot(emo_labels, num_classes = num_emos).float().to(device = self.device)
 
-    for tag, val in self.sample_set.get_set().items():
-        # tag is filename, val is [mel, labels, spec]
-        coded_sp = val[3].unsqueeze(0).unsqueeze(0).to(device = self.device)
-        labels = val[4]
+        for tag, val in self.sample_set.get_set().items():
+            # tag is filename, val is [mel, labels, spec]
 
-        with torch.no_grad():
-            # print(emo_targets)
-            for i in range (0, emo_targets.size(0)):
+            f0 = np.copy(val[0])
+            ap = np.copy(val[1])
+            sp = np.copy(val[2])
+            coded_sp = torch.Tensor.clone(val[3])
+            labels = torch.Tensor.clone(val[4])
 
-                fake = self.model.G(mel, emo_targets[i].unsqueeze(0))
+            coded_sp = val[3].unsqueeze(0).unsqueeze(0).to(device = self.device)
 
-                filename_wav =  tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
-                            str(emo_labels[i].item()) + '_i=' +\
-                            str(self.current_iter) + ".wav"
+            with torch.no_grad():
+                # print(emo_targets)
+                for i in range (0, emo_targets.size(0)):
 
-                fake = fake.squeeze().t()
-                fake = np.array(fake, dtype = np.float64)
+                    fake = self.model.G(coded_sp, emo_targets[i].unsqueeze(0))
 
-                val[3] = fake
+                    filename_wav =  tag[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+                                str(emo_labels[i].item()) + '_i=' +\
+                                str(self.current_iter) + ".wav"
 
-                audio_utils.save_world_wav(val, self.model_name, filename_wav)
+                    fake = fake.squeeze()
+                    print("Sampled size = ",fake.size())
+                    # f = fake.data()
+                    f = fake.cpu().numpy()
+                    f = np.array(f, dtype = np.float64)
+
+                    sample_length = fake.shape[0]
+                    if sample_length != ap.shape[0]:
+                        ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
+                        f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
+
+                    print("ap shape = ", val[1].shape)
+                    print("f0 shape = ", val[0].shape)
+
+                    audio_utils.save_world_wav([f0,ap,sp,f], self.model_name, filename_wav)
 
     def update_lr(self, i):
         """Decay learning rates of the generator and discriminator and classifier."""

@@ -110,7 +110,7 @@ def concatenate_labels(emo, speaker, dims, dims_dis):
 
     return all_labels
 
-def get_samples_and_labels(filename,config):
+def get_samples_and_labels(filename, config):
 
     # config = yaml.load(open('./config.yaml', 'r'))
 

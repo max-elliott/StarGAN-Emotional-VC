@@ -27,7 +27,7 @@ if __name__ == '__main__':
                     help="False = train, True = evaluate model")
     parser.add_argument("-a", "--alter", action = 'store_true')
     parser.add_argument("-r", "--recon", action = 'store_true')
-    parser.add_argument("-w", "--world", action = 'store_true')
+    # parser.add_argument("-f", "--features", type = 'str')
 
     args = parser.parse_args()
 
@@ -59,21 +59,29 @@ if __name__ == '__main__':
     print(torch.cuda)
 
     # Get correct data directory depending on features being used
-    if args.world:
+    if config['data']['type'] == 'world':
         print("Using WORLD features.")
-        config['model']['num_feats'] = 36
+        assert config['model']['num_feats'] == 36
         config['data']['type'] = 'world'
         data_dir = os.path.join(config['data']['dataset_dir'], "world")
     else:
         print("Using mel spectrograms.")
+        assert config['model']['num_feats'] == 80
         config['data']['type'] = 'mel'
         data_dir = os.path.join(config['data']['dataset_dir'], "mels")
+
+    print("Data directory = ", data_dir)
 
     # MAKE TRAIN + TEST SPLIT
     files = get_filenames(data_dir)
 
-    sessions = ['Ses01F', 'Ses01M', 'Ses02F', 'Ses02M', 'Ses03F', 'Ses03M']
-    files = [f for f in files if os.path.basename(f)[0:6] in sessions]
+
+    # , 'Ses01M', 'Ses02F', 'Ses02M', 'Ses03F', 'Ses03M'
+    sessions = ['Ses01F']
+    label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
+    num_emos = config['model']['num_classes']
+    # files = [f for f in files if os.path.basename(f)[0:6] in sessions]
+    files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
     print(len(files), " files used.")
 
     files = my_dataset.shuffle(files)
@@ -86,7 +94,9 @@ if __name__ == '__main__':
     print(len(train_files))
     print(len(test_files))
     # print(train_files[0:20])
-    print(test_files)
+    # print(test_files)
+
+    # print(np.load(data_dir + "/" + files[0] + ".npy").shape)
 
     train_dataset = my_dataset.MyDataset(config, train_files)
     test_dataset = my_dataset.MyDataset(config, test_files)
@@ -97,6 +107,9 @@ if __name__ == '__main__':
                                                                     test_dataset,
                                                                     batch_size = batch_size)
 
+    train_iter = iter(train_loader)
+    x,y = next(train_iter)
+    print(x[0].size())
     # Run solver
     # load_dir = './checkpoints/NewSolver/00006.ckpt'
     load_dir = args.checkpoint
@@ -123,23 +136,24 @@ if __name__ == '__main__':
     #
 
     # TEST MODEL COMPONENTS
-    # data_iter = iter(train_loader)
-    #
-    # x, y = next(data_iter)
-    #
-    # x_lens = x[1]
-    # x = x[0].unsqueeze(1)
-    # # x = x[:,:,0:80]
-    # # print(x.size(), y.size())
-    #
-    # targets = s.make_random_labels(4, batch_size)
-    # targets_one_hot = F.one_hot(targets, num_classes = 4).float()
-    #
-    # # out = s.model.G(input, targets)
-    # g_out = s.model.G(x, targets_one_hot)
-    # print('g_out = ', g_out.size())
-    # d_out = s.model.D(g_out, targets_one_hot)
-    # print('d_out = ', d_out)
-    # # WHY DIFFERNT LENGTH OUTPUT????
-    # out = s.model.emo_cls(g_out, x_lens)
-    # print('c_out = ',out)
+    data_iter = iter(train_loader)
+
+    x, y = next(data_iter)
+
+    x_lens = x[1]
+    x = x[0].unsqueeze(1)
+    # x = x[:,:,0:80]
+    # print(x.size(), y.size())
+
+    targets = s.make_random_labels(4, batch_size)
+    targets_one_hot = F.one_hot(targets, num_classes = 4).float()
+
+    print('g_in =', x.size())
+    # out = s.model.G(input, targets)
+    g_out = s.model.G(x, targets_one_hot)
+    print('g_out = ', g_out.size())
+    d_out = s.model.D(g_out, targets_one_hot)
+    print('d_out = ', d_out)
+    # WHY DIFFERNT LENGTH OUTPUT????
+    out = s.model.emo_cls(g_out, x_lens)
+    print('c_out = ',out)

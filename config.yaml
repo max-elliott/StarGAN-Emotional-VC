@@ -1,8 +1,8 @@
 model:
 
-      name: "id_test_Ses01F"
-      num_feats: 80
-      batch_size: 16
+      name: "world1"
+      num_feats: 36
+      batch_size: 4
       use_speaker: False
       use_dimension: False
       num_classes: 2
@@ -16,8 +16,8 @@ loss:
     lambda_cycle: 3
     lambda_id: 2
 
-    num_iters: 2000
-    num_iters_decay: 1000
+    num_iters: 10000
+    num_iters_decay: 5000
     resume_iters: 0
 
     c_to_g_ratio: 1
@@ -43,15 +43,15 @@ logs:
     sample_dir: './samples'
     model_save_dir: './checkpoints'
 
-    log_every: 5
-    sample_every: 100
-    model_save_every: 250
+    log_every: 1
+    sample_every: 1
+    model_save_every: 1
 
 data:
 
     dataset_dir: "../data"
     sample_set_dir: '../data/samples/originals'
-    train_test_split: 0.90
+    train_test_split: 0.9
     normalise_mels: True
     type: 'world'
 

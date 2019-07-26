@@ -122,6 +122,11 @@ def cal_mcep(wav, sr=SAMPLE_RATE, dim=FEATURE_DIM, fft_size=FFTSIZE):
         the frame_period used only for pad_wav_to_get_fixed_frames
     '''
     f0, timeaxis, sp, ap, coded_sp = world_features(wav, sr, fft_size, dim)
+
+    if audio_utils.hp.normalise_mels:
+        coded_sp = audio_utils._normalise_coded_sp(coded_sp)
+        # print("Normalised")
+
     coded_sp = coded_sp.T # dim x n
 
     return f0, ap, sp, coded_sp
@@ -160,64 +165,123 @@ if __name__ == "__main__":
     data_dir = '../data/audio/'
     sample = data_dir + 'Ses01F_impro01_F000.wav'
     # sr = 16000
-    wav = librosa.load(sample, sr=SAMPLE_RATE, mono=True, dtype=np.float64)[0]
-    f0, ap, sp, coded_sp = cal_mcep(wav)
-    mel = audio_utils.wav2melspectrogram(wav).transpose()
-    print(coded_sp.shape)
-    print(mel.shape)
-    coded_sp = np.ascontiguousarray(coded_sp.T, dtype=np.float64)
-    decoded_sp = decode_spectral_envelope(coded_sp, SAMPLE_RATE, fft_size=FFTSIZE)
-    # f0_converted = norm.pitch_conversion(f0, speaker, target)
-    wav2 = synthesize(f0, decoded_sp, ap, SAMPLE_RATE)
-    audio_utils.save_wav(wav2, './samples/worldwav.wav')
+    # wav = librosa.load(sample, sr=SAMPLE_RATE, mono=True, dtype=np.float64)[0]
+    # f0, ap, sp, coded_sp = cal_mcep(wav)
+    # mel = audio_utils.wav2melspectrogram(wav).transpose()
+    # print(coded_sp.shape)
+    # print(mel.shape)
+    # audio_utils.save_world_wav([f0,ap,sp,coded_sp.T], 'world1', 'test2.wav')
+    # coded_sp = np.ascontiguousarray(coded_sp.T, dtype=np.float64)
+    # decoded_sp = decode_spectral_envelope(coded_sp, SAMPLE_RATE, fft_size=FFTSIZE)
+    # # f0_converted = norm.pitch_conversion(f0, speaker, target)
+    # wav2 = synthesize(f0, decoded_sp, ap, SAMPLE_RATE)
+    # audio_utils.save_wav(wav2, './samples/worldwav.wav')
 
     min_length = 0 # actual is 59
-    max_length = 688
+    max_length = 1719
 
     data_dir = '/Users/Max/MScProject/data'
-    annotations_dir = os.path.join(data_dir, "audio")
-    files = find_files(data_dir, ext = 'wav')
-
+    annotations_dir = "/Users/Max/MScProject/data/labels"
+    files = find_files(annotations_dir, ext = 'npy')
+    print(len(files))
+    # print(f0.shape) # (len,)
+    # print(ap.shape) # (len, 513) assum n_fft//2+1
+    # print(coded_sp.shape) # (len, 36)
     filenames = []
     for f in files:
-        f = os.path.basename(f)
+        f = os.path.basename(f)[:-4] + ".wav"
         filenames.append(f)
-    # print(filenames)
+
+    print(filenames[0:3])
+    i = 0
+    mels_made = 0
+    for f in filenames:
+
+        wav, labels = pp.get_wav_and_labels(f, data_dir)
+        labels = np.array(labels)
+
+        if labels[0] != -1:
+
+            np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
+            mels_made += 1
+
+        i += 1
+        if i % 100 == 0:
+            print(i, " complete.")
+            print(mels_made, "labels made.")
+
 
     ############################################
     #      Code for making mels and labels     #
     ############################################
-    i = 0
-    worlds_made = 0
-    lengths = []
-    for f in filenames:
+    # i = 0
+    # worlds_made = 0
+    # lengths = []
+    # for f in files:
+    #
+    #     # wav, labels = pp.get_wav_and_labels(f, data_dir)
+    #     # wav = np.array(wav, dtype = np.float64)
+    #     # labels = np.array(labels)
+    #     #
+    #     # f0, ap, sp, coded_sp = cal_mcep(wav)
+    #     coded_sp = np.load(f)
+    #
+    #     # labels[0] != -1 and
+    #     if coded_sp.shape[1] >= max_length:
+    #
+    #         # lengths.append(coded_sp.shape[1])
+    #         # np.save(data_dir + "/world/" + f[:-4] + ".npy", coded_sp)
+    #         # np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
+    #         os.remove(f)
+    #         print("Removed ", os.path.basename(f), " . Length = ", coded_sp.shape[1])
+    #         worlds_made += 1
+    #
+    #     i += 1
+    #     if i % 10 == 0:
+    #         print(i, " complete.")
+    #         print(worlds_made, "worlds removed.")
 
-        wav, labels = pp.get_wav_and_labels(f, data_dir)
-        wav = np.array(wav, dtype = np.float64)
-        labels = np.array(labels)
+    # lengths.sort()
+    # cutoff = int(len(lengths)*0.9)
+    # print(lengths[0:100])
+    # print("Cutoff length is ", lengths[cutoff])
+    #
+    #
+    # n, bins, patches = plt.hist(lengths, bins = 22)
+    # plt.xlabel('Sequence length')
+    # plt.ylabel('Count')
+    # plt.title(r'New histogram of sequence lengths for 4 emotional categories')
+    # plt.show()
 
-        f0, ap, sp, coded_sp = cal_mcep(wav)
-
-        if labels[0] != -1:# and mel.shape[1] < max_length:
-
-            lengths.append(coded_sp.shape[1])
-            np.save(data_dir + "/world/" + f[:-4] + ".npy", coded_sp)
-            # np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
-            worlds_made += 1
-
-        i += 1
-        if i % 10 == 0:
-            print(i, " complete.")
-            print(worlds_made, "worlds made.")
-
-    lengths.sort()
-    cutoff = int(len(lengths)*0.9)
-    print(lengths[0:100])
-    print("Cutoff length is ", lengths[cutoff])
-
-
-    n, bins, patches = plt.hist(lengths, bins = 22)
-    plt.xlabel('Sequence length')
-    plt.ylabel('Count')
-    plt.title(r'New histogram of sequence lengths for 4 emotional categories')
-    plt.show()
+    ############################################
+    #  Finding min and max intensity of mpecs  #
+    ############################################
+    # i = 0
+    #
+    # max_intensity = -9999999
+    # min_intensity = 99999999
+    #
+    # for f in files:
+    #
+    #     coded_sp = np.load(f)
+    #     # coded_sp = audio_utils._normalise_coded_sp(coded_sp)
+    #     # np.save(f, coded_sp)
+    #     # mel_lengths.append(mel.shape[1])
+    #     max_val = np.max(coded_sp)
+    #     min_val = np.min(coded_sp)
+    #
+    #     if max_val > max_intensity:
+    #         max_intensity = max_val
+    #     if min_val < min_intensity:
+    #         min_intensity = min_val
+    #
+    #
+    #     i += 1
+    #     if i % 100 == 0:
+    #         # print(mel_lengths[mels_made-1])
+    #         # print(mel[:, 45])
+    #         print(max_intensity, ", ", min_intensity)
+    #         print(i, " complete.")
+    #
+    # print("max = {}".format(max_intensity))
+    # print("min = {}".format(min_intensity))

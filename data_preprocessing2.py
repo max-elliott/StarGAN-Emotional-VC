@@ -29,7 +29,7 @@ def get_emotion_from_label(category):
     if category == 'exc' or category == 'fru' or category == 'sur':
         return -1
 
-    conversion = {'hap':0, 'sad':1, 'ang':2, 'neu':3}
+    conversion = {'ang':0, 'sad':1, 'hap':2, 'neu':3}
 
     label = conversion[category]
 

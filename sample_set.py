@@ -1,5 +1,6 @@
 import os
 import yaml
+import numpy as np
 
 import audio_utils
 import data_preprocessing2 as pp
@@ -37,8 +38,8 @@ class Sample_Set():
 
                 audio = np.array(audio, dtype = np.float64)
 
-                f0, ap, sp, coded_sp = cal_mcep(audio)
-                coded_sp = torch.Tensor(coded_sp.T())
+                f0, ap, sp, coded_sp = pw.cal_mcep(audio)
+                coded_sp = torch.Tensor(coded_sp.T)
                 self.set[filename] = [f0, ap, sp, coded_sp, labels]
 
 

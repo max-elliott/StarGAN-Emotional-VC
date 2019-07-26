@@ -41,6 +41,8 @@ class hyperparams(object):
         self.max_norm_value = 3226.99139880277
         self.min_norm_value = 3.8234146815389095e-10
 
+        self.sp_max_norm_value = 6.482182376067761
+        self.sp_min_norm_value = -18.50642857581744
 
 hp = hyperparams()
 
@@ -72,8 +74,17 @@ def _normalise_mel(mel):
     return mel
 
 def _unnormalise_mel(mel):
-    mel = (hp.max_norm_value - hp. min_norm_value) * mel + hp.min_norm_value
+    mel = (hp.max_norm_value - hp.min_norm_value) * mel + hp.min_norm_value
     return mel
+
+def _normalise_coded_sp(sp):
+    sp = (sp - hp.sp_min_norm_value)/(hp.sp_max_norm_value - hp.sp_min_norm_value)
+
+    return sp
+
+def _unnormalise_coded_sp(sp):
+    sp = (hp.sp_max_norm_value - hp.sp_min_norm_value) * sp + hp.sp_min_norm_value
+    return sp
 
 def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
     '''
@@ -227,9 +238,9 @@ def save_world_wav(feats, model_name, filename):
     # feats = [f0, sp, ap, sp_coded, labels]
 
     if isinstance(feats[3], torch.Tensor):
-        spec = spec.cpu().numpy()
+        feats[3] = feats[3].cpu().numpy()
     if hp.normalise_mels:
-        spec = _unnormalise_coded_sp(spec)
+        feats[3] = _unnormalise_coded_sp(feats[3])
 
     path = os.path.join(hp.sample_set_dir, model_name)
 
@@ -238,11 +249,17 @@ def save_world_wav(feats, model_name, filename):
 
     path = os.path.join(path, filename)
 
+    # print("Made path.")
     feats[3] = np.ascontiguousarray(feats[3], dtype=np.float64)
-    decoded_sp = decode_spectral_envelope(coded_sp, hp.sr, fft_size = hp.n_fft)
+    # print("Made contiguous.")
+    # print(feats[3].shape)
+    decoded_sp = decode_spectral_envelope(feats[3], hp.sr, fft_size = hp.n_fft)
+    # print("Decoded.")
     # f0_converted = norm.pitch_conversion(f0, speaker, target)
-    wav = synthesize(feats[0], feats[3], feats[2], hp.sr)
-    audio_utils.save_wav(wav2, './samples/worldwav.wav')
+    wav = synthesize(feats[0], decoded_sp, feats[1], hp.sr)
+    # print("Sythesized wav.")
+    save_wav(wav, path)
+    print("Saved wav.")
 
 if __name__ == '__main__':
 
