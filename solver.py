@@ -316,7 +316,7 @@ class Solver(object):
 
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                self.test() #UNCOMMENT LATER
+                # self.test() #UNCOMMENT LATER
                 if self.config['data']['type'] == 'mel':
                     self.sample_mel()
                 else:
