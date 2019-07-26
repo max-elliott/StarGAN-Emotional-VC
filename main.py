@@ -5,6 +5,8 @@ import yaml
 import numpy as np
 import random
 import os
+import librosa
+from librosa.util import find_files
 
 import data_preprocessing as pp
 import audio_utils
@@ -12,6 +14,30 @@ import my_dataset
 from my_dataset import get_filenames
 import solver
 import solver_recon
+
+def make_weight_vector(filenames, data_dir):
+
+    label_dir = os.path.join(data_dir, 'labels')
+
+    emo_labels = []
+
+    for f in filenames:
+
+        label = np.load(label_dir + "/" + f + ".npy")
+        emo_labels.append(label[0])
+
+    categories = list(set(emo_labels))
+    total = len(emo_labels)
+
+    counts = [total/emo_labels.count(emo) for emo in range(len(categories))]
+
+    weights = torch.Tensor(counts)
+
+    return weights
+
+    # self.emo_loss_weights = torch.Tensor([4040./549, 4040./890,
+    #                                          4040./996, 4040./1605]).to(self.device)
+
 
 if __name__ == '__main__':
 
@@ -81,8 +107,10 @@ if __name__ == '__main__':
     label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
     num_emos = config['model']['num_classes']
     # files = [f for f in files if os.path.basename(f)[0:6] in sessions]
-    files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
+    # files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
     print(len(files), " files used.")
+    weight_vector = make_weight_vector(files, config['data']['dataset_dir'])
+    print(weight_vector)
 
     files = my_dataset.shuffle(files)
 
@@ -109,7 +137,7 @@ if __name__ == '__main__':
 
     train_iter = iter(train_loader)
     x,y = next(train_iter)
-    print(x[0].size())
+    # print(x[0].size())
     # Run solver
     # load_dir = './checkpoints/NewSolver/00006.ckpt'
     load_dir = args.checkpoint
@@ -126,6 +154,8 @@ if __name__ == '__main__':
         s.config = config
         s.set_configuration()
 
+    s.set_classification_weights(weights)
+    
     if not args.evaluate:
         print("Training model.")
         s.train()
@@ -135,25 +165,25 @@ if __name__ == '__main__':
     # for i, (x,y) in train_loader:
     #
 
-    # TEST MODEL COMPONENTS
-    data_iter = iter(train_loader)
-
-    x, y = next(data_iter)
-
-    x_lens = x[1]
-    x = x[0].unsqueeze(1)
-    # x = x[:,:,0:80]
-    # print(x.size(), y.size())
-
-    targets = s.make_random_labels(4, batch_size)
-    targets_one_hot = F.one_hot(targets, num_classes = 4).float()
-
-    print('g_in =', x.size())
-    # out = s.model.G(input, targets)
-    g_out = s.model.G(x, targets_one_hot)
-    print('g_out = ', g_out.size())
-    d_out = s.model.D(g_out, targets_one_hot)
-    print('d_out = ', d_out)
-    # WHY DIFFERNT LENGTH OUTPUT????
-    out = s.model.emo_cls(g_out, x_lens)
-    print('c_out = ',out)
+    # # TEST MODEL COMPONENTS
+    # data_iter = iter(train_loader)
+    #
+    # x, y = next(data_iter)
+    #
+    # x_lens = x[1]
+    # x = x[0].unsqueeze(1)
+    # # x = x[:,:,0:80]
+    # # print(x.size(), y.size())
+    #
+    # targets = s.make_random_labels(4, batch_size)
+    # targets_one_hot = F.one_hot(targets, num_classes = 4).float()
+    #
+    # print('g_in =', x.size())
+    # # out = s.model.G(input, targets)
+    # g_out = s.model.G(x, targets_one_hot)
+    # print('g_out = ', g_out.size())
+    # d_out = s.model.D(g_out, targets_one_hot)
+    # print('d_out = ', d_out)
+    # # WHY DIFFERNT LENGTH OUTPUT????
+    # out = s.model.emo_cls(g_out, x_lens)
+    # print('c_out = ',out)
