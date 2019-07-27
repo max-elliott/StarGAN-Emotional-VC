@@ -106,7 +106,7 @@ class Solver(object):
             self.logger = Logger(self.config['logs']['log_dir'], self.model_name)
 
     def set_classification_weights(self, weights):
-        self.emo_loss_weights = weights.to(device)
+        self.emo_loss_weights = weights.to(self.device)
         print("Set classification weights.")
 
     def train(self):
