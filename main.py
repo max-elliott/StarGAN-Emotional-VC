@@ -119,8 +119,8 @@ if __name__ == '__main__':
     train_files = files[:split_index]
     test_files = files[split_index:]
 
-    print(len(train_files))
-    print(len(test_files))
+    print(f"Training samples: {len(train_files)}")
+    print(f"Test samples: {len(test_files)}")
     # print(train_files[0:20])
     # print(test_files)
 
