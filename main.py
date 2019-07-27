@@ -154,7 +154,7 @@ if __name__ == '__main__':
         s.config = config
         s.set_configuration()
 
-    s.set_classification_weights(weights)
+    s.set_classification_weights(weight_vector)
 
     if not args.evaluate:
         print("Training model.")
