@@ -289,7 +289,7 @@ class Solver(object):
                 loss['G/total_loss'] = g_loss.item()
                 # loss['G/emo_loss'] = loss_g_emo_cls.item() #UNCOMMENT LATER
                 loss['D/gradient_penalty'] = grad_penalty.item()
-                # loss['G/loss_cycle'] = loss_cycle.item()
+                loss['G/loss_cycle'] = loss_cycle.item()
                 loss['G/loss_id'] = loss_id.item()
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()

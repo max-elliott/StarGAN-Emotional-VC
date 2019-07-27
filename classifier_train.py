@@ -12,6 +12,7 @@ import audio_utils
 import my_dataset
 import classifiers
 from my_dataset import get_filenames
+from main import make_weight_vector
 
 import torchvision
 import sklearn
@@ -27,7 +28,7 @@ else:
     device = torch.device('cpu')
 print(device)
 
-def save_checkpoint(state, filename='./checkpoint.pth'):
+def save_checkpoint(state, filename='./checkpoint.ckpt'):
 
     print("Saving a new best model")
     torch.save(state, filename)  # save checkpoint
@@ -157,17 +158,21 @@ if __name__=='__main__':
     np.random.seed(SEED)
     random.seed(SEED)
 
-    num_classes = 4
+    num_classes = 2
     n_epochs = 200
     hidden_size = 128
-    input_size = 80
+    input_size = 36
     num_layers = 2
 
     config = yaml.load(open('./config.yaml', 'r'))
 
     # MAKE TRAIN + TEST SPLIT
     mel_dir = os.path.join(config['data']['dataset_dir'], "mels")
+
     files = get_filenames(mel_dir)
+    num_emos = config['model']['num_classes']
+    label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
+    files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
     files = my_dataset.shuffle(files)
 
     train_test_split = config['data']['train_test_split']
@@ -187,8 +192,10 @@ if __name__=='__main__':
                                                                     test_dataset,
                                                                     batch_size = batch_size)
 
-    emo_loss_weights = torch.Tensor([4040./549, 4040./890,
-                                     4040./996, 4040./1605]).to(device)
+    # torch.Tensor([4040./549, 4040./890,
+                # 4040./996, 4040./1605]).to(device)
+    emo_loss_weights = make_weight_vector(files, config['data']['dataset_dir']).to(device)
+
     print("Making model")
 
     model = classifiers.Emotion_Classifier(input_size, hidden_size,
