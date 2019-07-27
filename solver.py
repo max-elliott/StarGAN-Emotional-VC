@@ -105,7 +105,7 @@ class Solver(object):
         if self.use_tensorboard:
             self.logger = Logger(self.config['logs']['log_dir'], self.model_name)
 
-    def set_classification_weights(weights):
+    def set_classification_weights(self, weights):
         self.emo_loss_weights = weights.to(device)
         print("Set classification weights.")
 
