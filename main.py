@@ -53,7 +53,7 @@ if __name__ == '__main__':
                     help="False = train, True = evaluate model")
     parser.add_argument("-a", "--alter", action = 'store_true')
     parser.add_argument("-r", "--recon", action = 'store_true')
-    parser.add_argument("-f", "--features", type = 'str')
+    parser.add_argument("-f", "--features", type = str)
 
     args = parser.parse_args()
     config = yaml.load(open('./config.yaml', 'r'))
