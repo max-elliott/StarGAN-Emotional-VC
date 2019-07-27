@@ -222,7 +222,7 @@ class Solver(object):
                 #Calculate loss
                 grad_penalty = self.gradient_penalty(x_real, x_fake, emo_targets_ones) # detach(), one hots?
 
-                d_loss = 0.5*(-d_preds_real.mean() + d_preds_fake.mean()) + \
+                d_loss = -d_preds_real.mean() + d_preds_fake.mean() + \
                          self.lambda_gp * grad_penalty
 
                 d_loss.backward()
