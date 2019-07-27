@@ -361,10 +361,10 @@ class Discriminator(nn.Module):
     def __init__(self, num_classes=4):
         super(Discriminator, self).__init__()
 
-        self.d1 = Down2d(1 + num_classes, 32, (9,3), (1,1), (4,1))
-        self.d2 = Down2d(16 + num_classes, 32, (8,3), (2,1), (3,1))
-        self.d3 = Down2d(16 + num_classes, 32, (8,3), (2,1), (3,1))
-        self.d4 = Down2d(16 + num_classes, 32, (6,3), (2,1), (2,1))
+        self.d1 = Down2d(1 + num_classes, 16, (9,3), (1,1), (4,1))
+        self.d2 = Down2d(16 + num_classes, 16, (8,3), (2,1), (3,1))
+        self.d3 = Down2d(16 + num_classes, 16, (8,3), (2,1), (3,1))
+        self.d4 = Down2d(16 + num_classes, 16, (6,3), (2,1), (2,1))
         #
         # self.conv = nn.Conv2d(36, 1, (8,8), (8,8), (2,0))
 
