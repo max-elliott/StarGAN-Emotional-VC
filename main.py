@@ -107,7 +107,7 @@ if __name__ == '__main__':
     label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
     num_emos = config['model']['num_classes']
     # files = [f for f in files if os.path.basename(f)[0:6] in sessions]
-    # files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
+    files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
     print(len(files), " files used.")
     weight_vector = make_weight_vector(files, config['data']['dataset_dir'])
     print(weight_vector)
