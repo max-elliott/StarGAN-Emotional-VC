@@ -42,7 +42,7 @@ def make_weight_vector(filenames, data_dir):
 if __name__ == '__main__':
 
     # ADD ALL CONFIG ARGS
-    parser = argparse.ArgumentParser(description='StarGAN-emo-VC')
+    parser = argparse.ArgumentParser(description='StarGAN-emo-VC main method')
     parser.add_argument("-n", "--name", type = str, default = None,
                     help="Model name for training.")
     parser.add_argument("-c","--checkpoint", type=str, default = None,
@@ -53,11 +53,11 @@ if __name__ == '__main__':
                     help="False = train, True = evaluate model")
     parser.add_argument("-a", "--alter", action = 'store_true')
     parser.add_argument("-r", "--recon", action = 'store_true')
-    # parser.add_argument("-f", "--features", type = 'str')
+    parser.add_argument("-f", "--features", type = 'str')
 
     args = parser.parse_args()
-
     config = yaml.load(open('./config.yaml', 'r'))
+
     if args.name != None:
         config['model']['name'] = args.name
         print(config['model']['name'])
@@ -155,7 +155,7 @@ if __name__ == '__main__':
         s.set_configuration()
 
     s.set_classification_weights(weights)
-    
+
     if not args.evaluate:
         print("Training model.")
         s.train()

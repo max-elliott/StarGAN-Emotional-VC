@@ -179,7 +179,7 @@ class StarGAN_emo_VC1(object):
 
         print("Model saved as {}.".format(path))
 
-    def load(self, load_dir):
+    def load(self, load_dir, map_location = None):
         '''
         load_dir: full directory of checkpoint to load
         '''
@@ -191,11 +191,16 @@ class StarGAN_emo_VC1(object):
         # path = os.path.join(load_dir, "{:05}.ckpt".format(iter))
 
         print(load_dir)
-        dictionary = torch.load(load_dir)
+
+        if map_location is not None:
+            dictionary = torch.load(load_dir, map_location=map_location)
+        else:
+            dictionary = torch.load(load_dir)
 
         self.config = dictionary['config']
         self.use_speaker = self.config['model']['use_speaker']
         self.use_dimension = self.config['model']['use_dimension']
+        self.name = self.config['model']['name']
 
         self.D.load_state_dict(dictionary['D'])
         self.G.load_state_dict(dictionary['G'])
@@ -305,15 +310,15 @@ class Generator_World(nn.Module):
         # x = self.downsample(x)
 
         x = self.down1(x)
-        print(x.size())
+        # print(x.size())
         x = self.down2(x)
-        print(x.size())
+        # print(x.size())
         x = self.down3(x)
-        print(x.size())
+        # print(x.size())
         x = self.down4(x)
-        print(x.size())
+        # print(x.size())
         x = self.down5(x)
-        print(x.size())
+        # print(x.size())
 
         c = c.view(c.size(0), c.size(1), 1, 1)
 
@@ -323,19 +328,19 @@ class Generator_World(nn.Module):
         x = torch.cat([x, c1], dim=1)
 
         x = self.up1(x)
-        print(x.size())
+        # print(x.size())
         c2 = c.repeat(1,1,x.size(2), x.size(3))
         x = torch.cat([x, c2], dim=1)
         x = self.up2(x)
-        print(x.size())
+        # print(x.size())
         c3 = c.repeat(1,1,x.size(2), x.size(3))
         x = torch.cat([x, c3], dim=1)
         x = self.up3(x)
-        print(x.size())
+        # print(x.size())
         c4 = c.repeat(1,1,x.size(2), x.size(3))
         x = torch.cat([x, c4], dim=1)
         x = self.up4(x)
-        print(x.size())
+        # print(x.size())
         c5 = c.repeat(1,1, x.size(2), x.size(3))
         x = torch.cat([x, c5], dim=1)
         x = self.deconv(x)
