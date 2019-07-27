@@ -122,8 +122,16 @@ def collate_length_order(batch):
 
     # Get each sequence and pad it
     sequences = [x[0] for x in sorted_batch]
+
+    #################################################
+    #            FOR FIXED LENGTH INPUTS            #
+    #################################################
     sequences_padded = [_pad_sequence(x, 512) for x in sequences]
     sequences_padded = torch.stack(sequences_padded)
+
+    #################################################
+    #          FOR VARIABLE LENGTH INPUTS           #
+    #################################################
     # sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
     #
     # max_len = sequences_padded.size(1)
@@ -154,6 +162,10 @@ def collate_length_order(batch):
 
     # Also need to store the length of each sequence
     # This is later needed in order to unpad the sequences
+    lengths = [len(x) for x in sequences]
+    for i,l in enumerate(lengths):
+        if l > 512:
+            lengths[i] = 512
     lengths = torch.LongTensor([len(x) for x in sequences])
 
     # Don't forget to grab the labels of the *sorted* batch

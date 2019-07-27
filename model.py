@@ -361,20 +361,24 @@ class Discriminator(nn.Module):
     def __init__(self, num_classes=4):
         super(Discriminator, self).__init__()
 
-        # self.d1 = Down2d(5, 32, (9,3), (1,1), (4,1))
-        # self.d2 = Down2d(36, 32, (8,3), (2,1), (3,1))
-        # self.d3 = Down2d(36, 32, (8,3), (2,1), (3,1))
-        # self.d4 = Down2d(36, 32, (6,3), (2,1), (2,1))
+        self.d1 = Down2d(1 + num_classes, 32, (9,3), (1,1), (4,1))
+        self.d2 = Down2d(32 + num_classes, 32, (8,3), (2,1), (3,1))
+        self.d3 = Down2d(32 + num_classes, 32, (8,3), (2,1), (3,1))
+        self.d4 = Down2d(32 + num_classes, 32, (6,3), (2,1), (2,1))
         #
         # self.conv = nn.Conv2d(36, 1, (8,8), (8,8), (2,0))
 
-        self.d1 = Down2d(1 + num_classes, 32, (3,9), (1,1), (1,4))
-        self.d2 = Down2d(32 + num_classes, 32, (3,8), (1,2), (1,3))
-        self.d3 = Down2d(32 + num_classes, 32, (3,8), (1,2), (1,3))
-        self.d4 = Down2d(32 + num_classes, 32, (3,6), (1,2), (1,2))
+        # self.d1 = Down2d(1 + num_classes, 32, (3,9), (1,1), (1,4))
+        # self.d2 = Down2d(32 + num_classes, 32, (3,8), (1,2), (1,3))
+        # self.d3 = Down2d(32 + num_classes, 32, (3,8), (1,2), (1,3))
+        # self.d4 = Down2d(32 + num_classes, 32, (3,6), (1,2), (1,2))
 
-        self.conv = nn.Conv2d(32 + num_classes, 1, (8,8), (8,8), (0,2))
-        self.pool = nn.AdaptiveAvgPool2d(1)
+        # self.conv = nn.Conv2d(32 + num_classes, 1, (8,8), (8,8), (0,2))
+        # self.pool = nn.AdaptiveAvgPool2d(1)
+        # self.conv = nn.Conv2d(32 + num_classes, 1, (36,5), (36,1), (0,2))
+        # self.pool = nn.AvgPool2d((1,64))
+        self.conv = nn.Conv2d(32 + num_classes, 1, (5,36), (1,36), (2,0))
+        self.pool = nn.AvgPool2d((64,1))
 
     def forward(self, x, c):
         c = c.view(c.size(0), c.size(1), 1, 1)
