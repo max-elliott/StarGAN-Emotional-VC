@@ -165,7 +165,7 @@ if __name__ == '__main__':
     # for i, (x,y) in train_loader:
     #
 
-    # # TEST MODEL COMPONENTS
+    # TEST MODEL COMPONENTS
     # data_iter = iter(train_loader)
     #
     # x, y = next(data_iter)
@@ -175,8 +175,8 @@ if __name__ == '__main__':
     # # x = x[:,:,0:80]
     # # print(x.size(), y.size())
     #
-    # targets = s.make_random_labels(4, batch_size)
-    # targets_one_hot = F.one_hot(targets, num_classes = 4).float()
+    # targets = s.make_random_labels(num_emos, batch_size)
+    # targets_one_hot = F.one_hot(targets, num_classes = num_emos).float()
     #
     # print('g_in =', x.size())
     # # out = s.model.G(input, targets)

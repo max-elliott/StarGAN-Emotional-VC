@@ -37,10 +37,12 @@ def shuffle(in_list):
 
     return shuffled_list
 
-def pad_sequence(seq, length, pad_value = 0):
+def _pad_sequence(seq, length, pad_value = 0):
     new_seq = torch.zeros((length,seq.size(1)))
-    new_seq[:seq.size(0), :] = seq
-
+    if seq.size(0) <= length:
+        new_seq[:seq.size(0), :] = seq
+    else:
+        new_seq[:seq.size(0), :] = seq[:length, :]
     return new_seq
 
 def crop_sequences(seq_list, labels, segment_len):
@@ -120,30 +122,32 @@ def collate_length_order(batch):
 
     # Get each sequence and pad it
     sequences = [x[0] for x in sorted_batch]
-    sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
-
-    max_len = sequences_padded.size(1)
-    # print("Original size = ", max_len)
-    # div8 = max_len%8==0
-    # div5 = max_len%5==0
-    # div9 = max_len%3==0
-    # if not (div8 and div5 and div9):
+    sequences_padded = [_pad_sequence(x, 512) for x in sequences]
+    sequences_padded = torch.stack(sequences_padded)
+    # sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
+    #
+    # max_len = sequences_padded.size(1)
+    # # print("Original size = ", max_len)
+    # # div8 = max_len%8==0
+    # # div5 = max_len%5==0
+    # # div9 = max_len%3==0
+    # # if not (div8 and div5 and div9):
+    # #     pad_len = max_len + 1
+    # #     # print("Current pad:", pad_len)
+    # #     while (pad_len%8 !=0 or pad_len%5!=0 or pad_len%3!=0):
+    # #         pad_len += 1
+    # #         # print("Current pad:", pad_len%9)
+    # div16 = max_len%16==0
+    #
+    # if not div16:
     #     pad_len = max_len + 1
     #     # print("Current pad:", pad_len)
-    #     while (pad_len%8 !=0 or pad_len%5!=0 or pad_len%3!=0):
+    #     while pad_len%16 !=0:
     #         pad_len += 1
     #         # print("Current pad:", pad_len%9)
-    div16 = max_len%16==0
-
-    if not div16:
-        pad_len = max_len + 1
-        # print("Current pad:", pad_len)
-        while pad_len%16 !=0:
-            pad_len += 1
-            # print("Current pad:", pad_len%9)
-        pad_len = pad_len - max_len
-        new_tensor = torch.zeros((sequences_padded.size(0),pad_len,sequences_padded.size(2)))
-        sequences_padded = torch.cat([sequences_padded, new_tensor], dim =1)
+    #     pad_len = pad_len - max_len
+    #     new_tensor = torch.zeros((sequences_padded.size(0),pad_len,sequences_padded.size(2)))
+    #     sequences_padded = torch.cat([sequences_padded, new_tensor], dim =1)
 
     # print("New size = ", max_len+pad_len)
     # print("Pad size = ", pad_len)

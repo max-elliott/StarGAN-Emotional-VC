@@ -164,11 +164,11 @@ if __name__ == "__main__":
     ###########################################
     data_dir = '../data/audio/'
     sample = data_dir + 'Ses01F_impro01_F000.wav'
-    # sr = 16000
-    # wav = librosa.load(sample, sr=SAMPLE_RATE, mono=True, dtype=np.float64)[0]
-    # f0, ap, sp, coded_sp = cal_mcep(wav)
-    # mel = audio_utils.wav2melspectrogram(wav).transpose()
-    # print(coded_sp.shape)
+    sr = 16000
+    wav = librosa.load(sample, sr=SAMPLE_RATE, mono=True, dtype=np.float64)[0]
+    f0, ap, sp, coded_sp = cal_mcep(wav)
+    mel = audio_utils.wav2melspectrogram(wav).transpose()
+    print(coded_sp.shape)
     # print(mel.shape)
     # audio_utils.save_world_wav([f0,ap,sp,coded_sp.T], 'world1', 'test2.wav')
     # coded_sp = np.ascontiguousarray(coded_sp.T, dtype=np.float64)
@@ -177,38 +177,38 @@ if __name__ == "__main__":
     # wav2 = synthesize(f0, decoded_sp, ap, SAMPLE_RATE)
     # audio_utils.save_wav(wav2, './samples/worldwav.wav')
 
-    min_length = 0 # actual is 59
-    max_length = 1719
-
-    data_dir = '/Users/Max/MScProject/data'
-    annotations_dir = "/Users/Max/MScProject/data/labels"
-    files = find_files(annotations_dir, ext = 'npy')
-    print(len(files))
-    # print(f0.shape) # (len,)
-    # print(ap.shape) # (len, 513) assum n_fft//2+1
-    # print(coded_sp.shape) # (len, 36)
-    filenames = []
-    for f in files:
-        f = os.path.basename(f)[:-4] + ".wav"
-        filenames.append(f)
-
-    print(filenames[0:3])
-    i = 0
-    mels_made = 0
-    for f in filenames:
-
-        wav, labels = pp.get_wav_and_labels(f, data_dir)
-        labels = np.array(labels)
-
-        if labels[0] != -1:
-
-            np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
-            mels_made += 1
-
-        i += 1
-        if i % 100 == 0:
-            print(i, " complete.")
-            print(mels_made, "labels made.")
+    # min_length = 0 # actual is 59
+    # max_length = 1719
+    #
+    # data_dir = '/Users/Max/MScProject/data'
+    # annotations_dir = "/Users/Max/MScProject/data/labels"
+    # files = find_files(annotations_dir, ext = 'npy')
+    # print(len(files))
+    # # print(f0.shape) # (len,)
+    # # print(ap.shape) # (len, 513) assum n_fft//2+1
+    # # print(coded_sp.shape) # (len, 36)
+    # filenames = []
+    # for f in files:
+    #     f = os.path.basename(f)[:-4] + ".wav"
+    #     filenames.append(f)
+    #
+    # print(filenames[0:3])
+    # i = 0
+    # mels_made = 0
+    # for f in filenames:
+    #
+    #     wav, labels = pp.get_wav_and_labels(f, data_dir)
+    #     labels = np.array(labels)
+    #
+    #     if labels[0] != -1:
+    #
+    #         np.save(data_dir + "/labels/" + f[:-4] + ".npy", labels)
+    #         mels_made += 1
+    #
+    #     i += 1
+    #     if i % 100 == 0:
+    #         print(i, " complete.")
+    #         print(mels_made, "labels made.")
 
 
     ############################################

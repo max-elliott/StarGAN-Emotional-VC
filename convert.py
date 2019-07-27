@@ -118,9 +118,15 @@ if __name__=='__main__':
 
     print(coded_sp[1000:1002,:])
     print(converted_sp[1000:1002,:])
+
+    i1 = plt.figure(1)
     plt.imshow(coded_sp)
-    # plt.imshow(converted_sp)
+    i2 = plt.figure(2)
+    plt.imshow(converted_sp)
+    # i1.show()
+    # i2.show()
     plt.show()
+
     ########################################
     #        WORLD CONVERSION LOOP         #
     ########################################

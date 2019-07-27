@@ -45,13 +45,13 @@ logs:
 
     log_every: 1
     sample_every: 1
-    model_save_every: 1
+    model_save_every: 20
 
 data:
 
     dataset_dir: "../data"
     sample_set_dir: '../data/samples/originals'
-    train_test_split: 0.9
+    train_test_split: 0.9992
     normalise_mels: True
     type: 'world'
 

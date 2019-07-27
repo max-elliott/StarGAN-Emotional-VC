@@ -146,6 +146,7 @@ class Solver(object):
 
             x_real = x[0].to(device = self.device).unsqueeze(1)
             x_lens = x[1].to(device = self.device)
+            print(f"solver.train: x_real size = {x_real.size()}")
 
             emo_labels = labels[:,0].to(device = self.device)
             spk_labels = labels[:,1].to(device = self.device)
