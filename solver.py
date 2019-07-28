@@ -496,22 +496,22 @@ class Solver(object):
                     fake = fake.squeeze()
                     print("Sampled size = ",fake.size())
                     # f = fake.data()
-                    f = fake.cpu().numpy()
-                    f = np.array(f, dtype = np.float64)
+                    converted_sp = fake.cpu().numpy()
+                    converted_sp = np.array(converted_sp, dtype = np.float64)
 
-                    sample_length = fake.shape[0]
+                    sample_length = converted_sp.shape[0]
                     if sample_length != ap.shape[0]:
                         ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
                         f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
 
                     f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
                     ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
-                    converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64
+                    converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
 
                     # print("ap shape = ", val[1].shape)
                     # print("f0 shape = ", val[0].shape)
 
-                    audio_utils.save_world_wav([f0,ap,sp,f], self.model_name, filename_wav)
+                    audio_utils.save_world_wav([f0,ap,sp,converted_sp], self.model_name, filename_wav)
 
     def update_lr(self, i):
         """Decay learning rates of the generator and discriminator and classifier."""
