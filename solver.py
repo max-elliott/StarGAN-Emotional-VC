@@ -472,8 +472,8 @@ class Solver(object):
         for tag, val in self.sample_set.get_set().items():
             # tag is filename, val is [mel, labels, spec]
 
-            f0 = np.copy(val[0])
-            ap = np.copy(val[1])
+            f0_real = np.copy(val[0])
+            ap_real = np.copy(val[1])
             sp = np.copy(val[2])
             coded_sp = torch.Tensor.clone(val[3])
             labels = torch.Tensor.clone(val[4])
@@ -483,6 +483,9 @@ class Solver(object):
             with torch.no_grad():
                 # print(emo_targets)
                 for i in range (0, emo_targets.size(0)):
+
+                    f0 = np.copy(f0_real)
+                    ap = np.copy(ap_real)
 
                     fake = self.model.G(coded_sp, emo_targets[i].unsqueeze(0))
 
@@ -501,8 +504,12 @@ class Solver(object):
                         ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
                         f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
 
-                    print("ap shape = ", val[1].shape)
-                    print("f0 shape = ", val[0].shape)
+                    f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
+                    ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
+                    converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64
+
+                    # print("ap shape = ", val[1].shape)
+                    # print("f0 shape = ", val[0].shape)
 
                     audio_utils.save_world_wav([f0,ap,sp,f], self.model_name, filename_wav)
 

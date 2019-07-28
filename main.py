@@ -110,7 +110,7 @@ if __name__ == '__main__':
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
     print(len(files), " files used.")
     weight_vector = make_weight_vector(files, config['data']['dataset_dir'])
-    print(weight_vector)
+    # print(weight_vector)
 
     files = my_dataset.shuffle(files)
 
@@ -118,6 +118,8 @@ if __name__ == '__main__':
     split_index = int(len(files)*train_test_split)
     train_files = files[:split_index]
     test_files = files[split_index:]
+
+    print(test_files)
 
     print(f"Training samples: {len(train_files)}")
     print(f"Test samples: {len(test_files)}")

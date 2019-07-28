@@ -79,7 +79,7 @@ def _unnormalise_mel(mel):
 
 def _normalise_coded_sp(sp):
     sp = (sp - hp.sp_min_norm_value)/(hp.sp_max_norm_value - hp.sp_min_norm_value)
-
+    np.clip(sp, hp.sp_min_norm_value, hp.sp_max_norm_value)
     return sp
 
 def _unnormalise_coded_sp(sp):
@@ -257,6 +257,8 @@ def save_world_wav(feats, model_name, filename):
     # print("Decoded.")
     # f0_converted = norm.pitch_conversion(f0, speaker, target)
     wav = synthesize(feats[0], decoded_sp, feats[1], hp.sr)
+    # Audio(wav,rate=hp.sr)
+    # librosa.display.waveplot(y=wav, sr=hp.sr)
     # print("Sythesized wav.")
     save_wav(wav, path)
     print("Saved wav.")

@@ -171,7 +171,7 @@ class StarGAN_emo_VC1(object):
             state['dim'] = self.dimension_cls.state_dict()
             state['dim_opt'] = self.dimension_cls_cls_optimizer.state_dict()
 
-        path = os.path.join(path, "{:05}.ckpt".format(iter))
+        path = os.path.join(path, "{:06}.ckpt".format(iter))
 
         torch.save(state, path)
         # torch.save(self.G.state_dict(), G_path)
@@ -361,10 +361,10 @@ class Discriminator(nn.Module):
     def __init__(self, num_classes=4):
         super(Discriminator, self).__init__()
 
-        self.d1 = Down2d(1 + num_classes, 16, (9,3), (1,1), (4,1))
-        self.d2 = Down2d(16 + num_classes, 16, (8,3), (2,1), (3,1))
-        self.d3 = Down2d(16 + num_classes, 16, (8,3), (2,1), (3,1))
-        self.d4 = Down2d(16 + num_classes, 16, (6,3), (2,1), (2,1))
+        self.d1 = Down2d(1 + num_classes, 32, (9,3), (1,1), (4,1))
+        self.d2 = Down2d(32 + num_classes, 32, (8,3), (2,1), (3,1))
+        self.d3 = Down2d(32 + num_classes, 32, (8,3), (2,1), (3,1))
+        self.d4 = Down2d(32 + num_classes, 32, (6,3), (2,1), (2,1))
         #
         # self.conv = nn.Conv2d(36, 1, (8,8), (8,8), (2,0))
 
@@ -377,7 +377,7 @@ class Discriminator(nn.Module):
         # self.pool = nn.AdaptiveAvgPool2d(1)
         # self.conv = nn.Conv2d(32 + num_classes, 1, (36,5), (36,1), (0,2))
         # self.pool = nn.AvgPool2d((1,64))
-        self.conv = nn.Conv2d(16 + num_classes, 1, (5,36), (1,36), (2,0))
+        self.conv = nn.Conv2d(32 + num_classes, 1, (5,36), (1,36), (2,0))
         self.pool = nn.AvgPool2d((64,1))
 
     def forward(self, x, c):

@@ -170,10 +170,13 @@ if __name__ == "__main__":
     mel = audio_utils.wav2melspectrogram(wav).transpose()
     print(coded_sp.shape)
     # print(mel.shape)
-    # audio_utils.save_world_wav([f0,ap,sp,coded_sp.T], 'world1', 'test2.wav')
-    # coded_sp = np.ascontiguousarray(coded_sp.T, dtype=np.float64)
+    # f0 = np.ascontiguousarray(f0[200:], dtype=np.float64)
+    # ap = np.ascontiguousarray(ap[200:,:], dtype=np.float64)
+    # coded_sp = np.ascontiguousarray(coded_sp.T[200:,:], dtype=np.float64)
+    audio_utils.save_world_wav([f0,ap,sp,coded_sp], 'tests', 'crop_test.wav')
+
     # decoded_sp = decode_spectral_envelope(coded_sp, SAMPLE_RATE, fft_size=FFTSIZE)
-    # # f0_converted = norm.pitch_conversion(f0, speaker, target)
+    # f0_converted = norm.pitch_conversion(f0, speaker, target)
     # wav2 = synthesize(f0, decoded_sp, ap, SAMPLE_RATE)
     # audio_utils.save_wav(wav2, './samples/worldwav.wav')
 
