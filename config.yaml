@@ -45,6 +45,7 @@ logs:
 
     log_every: 1
     sample_every: 1
+    test_every: 1
     model_save_every: 20
 
 data:

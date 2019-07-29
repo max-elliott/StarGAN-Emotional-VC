@@ -100,7 +100,7 @@ class StarGAN_emo_VC1(object):
         con_opt = self.config['optimizer']
         self.g_optimizer = torch.optim.Adam(self.G.parameters(), con_opt['g_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.d_optimizer = torch.optim.Adam(self.D.parameters(), con_opt['d_lr'], [con_opt['beta1'], con_opt['beta2']])
-        self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
+        self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']],weight_decay = 0.000001)
         if self.use_speaker:
             self.speaker_cls_optimizer = torch.optim.Adam(self.speaker_cls.parameters(), con_opt['speaker_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
         if self.use_dimension:
@@ -213,7 +213,7 @@ class StarGAN_emo_VC1(object):
         con_opt = self.config['optimizer']
         self.g_optimizer = torch.optim.Adam(self.G.parameters(), con_opt['g_lr'], [con_opt['beta1'], con_opt['beta2']])
         self.d_optimizer = torch.optim.Adam(self.D.parameters(), con_opt['d_lr'], [con_opt['beta1'], con_opt['beta2']])
-        self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']])
+        self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']],weight_decay = 0.000001)
 
         if 'spk' in dictionary:
             self.speaker_cls.load_state_dict(dictionary['spk'])

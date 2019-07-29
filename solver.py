@@ -96,6 +96,7 @@ class Solver(object):
 
         self.sample_dir = self.config['logs']['sample_dir']
         self.sample_every = self.config['logs']['sample_every']
+        self.test_every = self.config['logs']['test_every']
 
         self.model_save_dir = self.config['logs']['model_save_dir']
         self.model_save_every = self.config['logs']['model_save_every']
@@ -315,9 +316,10 @@ class Solver(object):
             else:
                 print("No model saved this iteration.")
 
+            if i % self.test_every == 0:
+                self.test()
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                self.test() #UNCOMMENT LATER
                 if self.config['data']['type'] == 'mel':
                     self.sample_mel()
                 else:
@@ -357,7 +359,6 @@ class Solver(object):
             x_lens = x[1].to(device = self.device)
 
             x_real = x_real.unsqueeze(1)
-            print(x_real.size())
 
             emo_labels = labels[:,0].to(device = self.device)
             spk_labels = labels[:,1].to(device = self.device)
