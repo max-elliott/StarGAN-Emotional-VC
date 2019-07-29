@@ -158,7 +158,7 @@ if __name__=='__main__':
     np.random.seed(SEED)
     random.seed(SEED)
 
-    num_classes = 2
+    # num_classes = 2
     n_epochs = 200
     hidden_size = 128
     input_size = 36
@@ -199,7 +199,7 @@ if __name__=='__main__':
     print("Making model")
 
     model = classifiers.Emotion_Classifier(input_size, hidden_size,
-                     num_layers = num_layers, num_classes = num_classes, bi = True)
+                     num_layers = num_layers, num_classes = num_emos, bi = True)
     optimiser = optim.Adam(model.parameters(), lr=0.0001, weight_decay = 0.000001)
 
     loss_fn = nn.CrossEntropyLoss(weight = emo_loss_weights)

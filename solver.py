@@ -346,10 +346,10 @@ class Solver(object):
         total_labels = torch.rand(0).to(device = self.device, dtype = torch.long)
         total_targets = torch.rand(0).to(device = self.device, dtype = torch.long)
 
-        total_L1_loss_id = torch.rand(0).to(device = self.device, dtype = torch.float)
-        total_L1_loss_cycle = torch.rand(0).to(device = self.device, dtype = torch.float)
-        l1_loss_fn = nn.L1Loss(reduction='none')
-        print(total_L1_loss_cycle)
+        total_real = torch.rand(0).to(device = self.device, dtype = torch.float)
+        total_id = torch.rand(0).to(device = self.device, dtype = torch.float)
+        total_cycle = torch.rand(0).to(device = self.device, dtype = torch.float)
+        l1_loss_fn = nn.L1Loss()
 
         for i, (x, labels) in enumerate(self.test_loader):
 
@@ -388,20 +388,16 @@ class Solver(object):
                 c_emo_fake = torch.max(c_emo_fake, dim = 1)[1]
                 c_emo_id = torch.max(c_emo_id, dim = 1)[1]
                 c_emo_cycle = torch.max(c_emo_cycle, dim = 1)[1]
-                print(x_id.size())
-                print(x_cycle.size())
-                L1_loss_id = l1_loss_fn(x_id, x_real)
-                L1_loss_cycle = l1_loss_fn(x_cycle, x_real)
-                print(L1_loss_id)
-                print(L1_loss_cycle)
+
                 # D as well
                 real_preds = torch.cat((real_preds, c_emo_real), dim=0)
                 fake_preds = torch.cat((fake_preds, c_emo_fake), dim=0)
                 id_preds = torch.cat((id_preds, c_emo_id), dim=0)
                 cycle_preds = torch.cat((cycle_preds, c_emo_cycle), dim=0)
 
-                total_L1_loss_id = torch.cat((total_L1_loss_id, L1_loss_id), dim=0)
-                total_L1_loss_cycle = torch.cat((total_L1_loss_cycle, L1_loss_id_cycle), dim=0)
+                total_real = torch.cat((total_real, x_real), dim=0)
+                total_id = torch.cat((total_id, x_id), dim=0)
+                total_cycle = torch.cat((total_cycle, x_cycle), dim=0)
 
                 total_labels = torch.cat((total_labels, emo_labels), dim=0)
                 total_targets = torch.cat((total_targets, emo_targets), dim=0)
@@ -411,6 +407,11 @@ class Solver(object):
         accuracy_id = accuracy_score(total_labels.cpu(), id_preds.cpu())
         accuracy_cycle = accuracy_score(total_labels.cpu(), cycle_preds.cpu())
 
+        L1_loss_id = l1_loss_fn(total_id, total_real).item()
+        L1_loss_cycle = l1_loss_fn(total_cycle, total_real).item()
+        # print(L1_loss_id)
+        # print(L1_loss_cycle)
+
         l = ["Accuracy_real","Accuracy_fake", "Accuracy_id", "Accuracy_cycle",
             "L1_id", "L1_cycle"]
 
@@ -418,16 +419,16 @@ class Solver(object):
         print('{:20} = {:.3f}'.format(l[1], accuracy_fake))
         print('{:20} = {:.3f}'.format(l[2], accuracy_id))
         print('{:20} = {:.3f}'.format(l[3], accuracy_cycle))
-        print('{:20} = {:.3f}'.format(l[4], total_L1_loss_id.mean()))
-        print('{:20} = {:.3f}'.format(l[5], total_L1_loss_cycle.mean()))
+        print('{:20} = {:.3f}'.format(l[4], L1_loss_id))
+        print('{:20} = {:.3f}'.format(l[5], L1_loss_cycle))
 
         if self.use_tensorboard:
             self.logger.scalar_summary("Val/test_accuracy_real", accuracy_real, self.current_iter)
             self.logger.scalar_summary("Val/test_accuracy_fake", accuracy_fake, self.current_iter)
             self.logger.scalar_summary("Val/test_accuracy_id", accuracy_id, self.current_iter)
             self.logger.scalar_summary("Val/test_accuracy_cycle", accuracy_cycle, self.current_iter)
-            self.logger.scalar_summary("Val/test_L1_id", total_L1_loss_id.mean(), self.current_iter)
-            self.logger.scalar_summary("Val/test_L1_cycle", total_L1_loss_cycle.mean(), self.current_iter)
+            self.logger.scalar_summary("Val/test_L1_id", L1_loss_id, self.current_iter)
+            self.logger.scalar_summary("Val/test_L1_cycle", L1_loss_cycle, self.current_iter)
 
     def sample_mel(self):
         '''
