@@ -134,11 +134,10 @@ def collate_length_order(batch):
     sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
     # current_len = sequences_padded.size(1)
     # print(f"Current length: {current_len}")
-    # if current_len < 1024:
-    #     print("Cut")
-    #     pad_len = 1024 - current_len
-    #     new_tensor = torch.zeros((sequences_padded.size(0),pad_len,sequences_padded.size(2)))
-    #     sequences_padded = torch.cat([sequences_padded, new_tensor], dim =1)
+    if current_len < 512:
+        pad_len = 512 - current_len
+        new_tensor = torch.zeros((sequences_padded.size(0),pad_len,sequences_padded.size(2)))
+        sequences_padded = torch.cat([sequences_padded, new_tensor], dim =1)
     # else:
     #     sequences_padded = sequences_padded[:,:512,:]
     # print(f"Padded length: {sequences_padded.size(1)}")
