@@ -130,9 +130,9 @@ def collate_length_order(batch):
         if seq.size(0) > 512:
             sequences[i] = seq[:512,:]
         # (seq[i] = seq[:512,:]) if seq.size(0) > 512 else seq[i] = seq
-    current_len = sequences_padded.size(1)
-    sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
 
+    sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
+    current_len = sequences_padded.size(1)
     # print(f"Current length: {current_len}")
     if current_len < 512:
         pad_len = 512 - current_len
