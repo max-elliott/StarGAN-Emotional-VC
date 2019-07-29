@@ -67,7 +67,7 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             y = y[:,0].to(device=device, dtype=torch.float)
 
             optimiser.zero_grad()
-            print(x_real.size())
+            # print(x_real.size())
             predictions = model(x_real, x_lens)
             #       predictions = predictions.squeeze(0)
             loss = loss_fn(predictions.float(), y.long())
@@ -76,7 +76,7 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
 
             total_loss += loss.item()
 
-            print("Epoch ", e, ", iteration", t, " done.")
+            # print("Epoch ", e, ", iteration", t, " done.")
 
         if t % print_every == 0:
 
