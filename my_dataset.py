@@ -126,8 +126,25 @@ def collate_length_order(batch):
     #################################################
     #            FOR FIXED LENGTH INPUTS            #
     #################################################
-    sequences_padded = [_pad_sequence(x, 512) for x in sequences]
-    sequences_padded = torch.stack(sequences_padded)
+    for i,seq in enumerate(sequences):
+        if seq.size(0) > 512:
+            sequences[i] = seq[:512,:]
+        # (seq[i] = seq[:512,:]) if seq.size(0) > 512 else seq[i] = seq
+
+    sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
+    # current_len = sequences_padded.size(1)
+    # print(f"Current length: {current_len}")
+    # if current_len < 1024:
+    #     print("Cut")
+    #     pad_len = 1024 - current_len
+    #     new_tensor = torch.zeros((sequences_padded.size(0),pad_len,sequences_padded.size(2)))
+    #     sequences_padded = torch.cat([sequences_padded, new_tensor], dim =1)
+    # else:
+    #     sequences_padded = sequences_padded[:,:512,:]
+    # print(f"Padded length: {sequences_padded.size(1)}")
+
+    # sequences_padded = [_pad_sequence(x, 512) for x in sequences]
+    # sequences_padded = torch.stack(sequences_padded)
 
     #################################################
     #          FOR VARIABLE LENGTH INPUTS           #
@@ -135,16 +152,16 @@ def collate_length_order(batch):
     # sequences_padded = torch.nn.utils.rnn.pad_sequence(sequences, batch_first=True)
     #
     # max_len = sequences_padded.size(1)
-    # # print("Original size = ", max_len)
-    # # div8 = max_len%8==0
-    # # div5 = max_len%5==0
-    # # div9 = max_len%3==0
-    # # if not (div8 and div5 and div9):
-    # #     pad_len = max_len + 1
-    # #     # print("Current pad:", pad_len)
-    # #     while (pad_len%8 !=0 or pad_len%5!=0 or pad_len%3!=0):
-    # #         pad_len += 1
-    # #         # print("Current pad:", pad_len%9)
+    # print("Original size = ", max_len)
+    # div8 = max_len%8==0
+    # div5 = max_len%5==0
+    # div9 = max_len%3==0
+    # if not (div8 and div5 and div9):
+    #     pad_len = max_len + 1
+    #     # print("Current pad:", pad_len)
+    #     while (pad_len%8 !=0 or pad_len%5!=0 or pad_len%3!=0):
+    #         pad_len += 1
+    #         # print("Current pad:", pad_len%9)
     # div16 = max_len%16==0
     #
     # if not div16:

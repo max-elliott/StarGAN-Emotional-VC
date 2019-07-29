@@ -51,7 +51,7 @@ data:
 
     dataset_dir: "../data"
     sample_set_dir: '../data/samples/originals'
-    train_test_split: 0.9
+    train_test_split: 0.999
     normalise_mels: True
     type: 'world'
 

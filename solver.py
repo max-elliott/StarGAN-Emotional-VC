@@ -165,43 +165,40 @@ class Solver(object):
             #                    TRAIN CLASSIFIERS                      #
             #############################################################
             print('Training Classifiers...')
-            # UNCOMMENT LATER
-            # self.model.reset_grad()
-            # ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
-            #
-            # # Train with x_real
-            # preds_emo_real = self.model.emo_cls(x_real, x_lens)
-            #
-            # c_emo_real_loss = ce_weighted_loss_fn(preds_emo_real, emo_labels)
-            #
-            # c_emo_real_loss.backward()
-            # self.model.emo_cls_optimizer.step()
-            #
-            # if self.model.use_speaker:
-            #     self.model.reset_grad()
-            #
-            #     # Train with x_real
-            #     preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
-            #
-            #     c_speaker_real_loss = ce_loss_fn(preds_speaker_real, spk_labels)
-            #
-            #     c_speaker_real_loss.backward()
-            #     self.model.speaker_cls_optimizer.step()
-            #
-            # if self.model.use_dimension:
-            #     self.model.reset_grad()
-            #
-            #     # Train with x_real
-            #     preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
-            #
-            #     #;;; DO FOR MULTILABEL
-            #     c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
-            #
-            #     c_speaker_real_loss.backward()
-            #     self.model.speaker_cls_optimizer.step()
-            # UNCOMMENT LATER
 
-            # repeat above for other classifiers when implemented
+            self.model.reset_grad()
+            ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
+
+            # Train with x_real
+            preds_emo_real = self.model.emo_cls(x_real, x_lens)
+
+            c_emo_real_loss = ce_weighted_loss_fn(preds_emo_real, emo_labels)
+
+            c_emo_real_loss.backward()
+            self.model.emo_cls_optimizer.step()
+
+            if self.model.use_speaker:
+                self.model.reset_grad()
+
+                # Train with x_real
+                preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
+
+                c_speaker_real_loss = ce_loss_fn(preds_speaker_real, spk_labels)
+
+                c_speaker_real_loss.backward()
+                self.model.speaker_cls_optimizer.step()
+
+            if self.model.use_dimension:
+                self.model.reset_grad()
+
+                # Train with x_real
+                preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
+
+                #;;; DO FOR MULTILABEL
+                c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
+
+                c_speaker_real_loss.backward()
+                self.model.speaker_cls_optimizer.step()
 
             #############################################################
             #                    TRAIN DISCRIMINATOR                    #
@@ -246,7 +243,7 @@ class Solver(object):
                 x_cycle = self.model.G(x_fake, emo_labels_ones)
                 x_id = self.model.G(x_real, emo_labels_ones)
                 d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
-                # preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens) #UNCOMMENT LATER
+                preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
 
 
                 # x_cycle = self.make_equal_length(x_cycle, x_real)
@@ -257,11 +254,11 @@ class Solver(object):
                 loss_g_fake = - d_preds_for_g.mean()
                 loss_cycle = l1_loss_fn(x_cycle, x_real)
                 loss_id = l1_loss_fn(x_id, x_real)
-                # loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
+                loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
                 g_loss = loss_g_fake + self.lambda_id * loss_id + \
-                                       self.lambda_cycle * loss_cycle# + \
-                                       #self.lambda_g_emo_cls * loss_g_emo_cls # UNCOMMENT LATER
+                                       self.lambda_cycle * loss_cycle + \
+                                       self.lambda_g_emo_cls * loss_g_emo_cls
 
                 if self.use_speaker:
 
@@ -285,10 +282,10 @@ class Solver(object):
             #############################################################
             if i % self.log_every == 0:
                 loss = {}
-                # loss['C/emo_real_loss'] = c_emo_real_loss.item() #UNCOMMENT LATER
+                loss['C/emo_real_loss'] = c_emo_real_loss.item()
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
-                # loss['G/emo_loss'] = loss_g_emo_cls.item() #UNCOMMENT LATER
+                loss['G/emo_loss'] = loss_g_emo_cls.item()
                 loss['D/gradient_penalty'] = grad_penalty.item()
                 loss['G/loss_cycle'] = loss_cycle.item()
                 loss['G/loss_id'] = loss_id.item()
@@ -320,7 +317,7 @@ class Solver(object):
 
             # generate example samples from test set ;;; needs doing
             if i % self.sample_every == 0:
-                # self.test() #UNCOMMENT LATER
+                self.test() #UNCOMMENT LATER
                 if self.config['data']['type'] == 'mel':
                     self.sample_mel()
                 else:
@@ -349,12 +346,18 @@ class Solver(object):
         total_labels = torch.rand(0).to(device = self.device, dtype = torch.long)
         total_targets = torch.rand(0).to(device = self.device, dtype = torch.long)
 
+        total_L1_loss_id = torch.rand(0).to(device = self.device, dtype = torch.float)
+        total_L1_loss_cycle = torch.rand(0).to(device = self.device, dtype = torch.float)
+        l1_loss_fn = nn.L1Loss(reduction='none')
+        print(total_L1_loss_cycle)
+
         for i, (x, labels) in enumerate(self.test_loader):
 
             x_real = x[0].to(device = self.device)
             x_lens = x[1].to(device = self.device)
 
             x_real = x_real.unsqueeze(1)
+            print(x_real.size())
 
             emo_labels = labels[:,0].to(device = self.device)
             spk_labels = labels[:,1].to(device = self.device)
@@ -385,12 +388,20 @@ class Solver(object):
                 c_emo_fake = torch.max(c_emo_fake, dim = 1)[1]
                 c_emo_id = torch.max(c_emo_id, dim = 1)[1]
                 c_emo_cycle = torch.max(c_emo_cycle, dim = 1)[1]
-
+                print(x_id.size())
+                print(x_cycle.size())
+                L1_loss_id = l1_loss_fn(x_id, x_real)
+                L1_loss_cycle = l1_loss_fn(x_cycle, x_real)
+                print(L1_loss_id)
+                print(L1_loss_cycle)
                 # D as well
                 real_preds = torch.cat((real_preds, c_emo_real), dim=0)
                 fake_preds = torch.cat((fake_preds, c_emo_fake), dim=0)
                 id_preds = torch.cat((id_preds, c_emo_id), dim=0)
                 cycle_preds = torch.cat((cycle_preds, c_emo_cycle), dim=0)
+
+                total_L1_loss_id = torch.cat((total_L1_loss_id, L1_loss_id), dim=0)
+                total_L1_loss_cycle = torch.cat((total_L1_loss_cycle, L1_loss_id_cycle), dim=0)
 
                 total_labels = torch.cat((total_labels, emo_labels), dim=0)
                 total_targets = torch.cat((total_targets, emo_targets), dim=0)
@@ -400,18 +411,23 @@ class Solver(object):
         accuracy_id = accuracy_score(total_labels.cpu(), id_preds.cpu())
         accuracy_cycle = accuracy_score(total_labels.cpu(), cycle_preds.cpu())
 
-        l = ["Accuracy_real","Accuracy_fake", "Accuracy_id", "Accuracy_cycle"]
+        l = ["Accuracy_real","Accuracy_fake", "Accuracy_id", "Accuracy_cycle",
+            "L1_id", "L1_cycle"]
 
         print('{:20} = {:.3f}'.format(l[0], accuracy_real))
         print('{:20} = {:.3f}'.format(l[1], accuracy_fake))
         print('{:20} = {:.3f}'.format(l[2], accuracy_id))
         print('{:20} = {:.3f}'.format(l[3], accuracy_cycle))
+        print('{:20} = {:.3f}'.format(l[4], total_L1_loss_id.mean()))
+        print('{:20} = {:.3f}'.format(l[5], total_L1_loss_cycle.mean()))
 
         if self.use_tensorboard:
             self.logger.scalar_summary("Val/test_accuracy_real", accuracy_real, self.current_iter)
             self.logger.scalar_summary("Val/test_accuracy_fake", accuracy_fake, self.current_iter)
             self.logger.scalar_summary("Val/test_accuracy_id", accuracy_id, self.current_iter)
             self.logger.scalar_summary("Val/test_accuracy_cycle", accuracy_cycle, self.current_iter)
+            self.logger.scalar_summary("Val/test_L1_id", total_L1_loss_id.mean(), self.current_iter)
+            self.logger.scalar_summary("Val/test_L1_cycle", total_L1_loss_cycle.mean(), self.current_iter)
 
     def sample_mel(self):
         '''

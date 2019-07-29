@@ -15,7 +15,7 @@ class Emotion_Classifier(nn.Module):
         '''
         super(Emotion_Classifier, self).__init__()
         self.hidden_size = hidden_size
-        self.input_size = input_size # == n_mels
+        self.input_size = input_size # == n_mels/world feats
         self.num_layers = num_layers
         self.num_classes = num_classes
         self.num_outchannels = 32
@@ -60,22 +60,22 @@ class Emotion_Classifier(nn.Module):
         # x = (B, channels, max_l//4, n_mels//4)
 
         #Recurrent layers
-        # print(x_data.size())
+        print(x_data.size())
         x_data = x_data.permute(0,2,1,3)
         x_data = x_data.contiguous().view(batch_size, -1, self.num_outchannels*(no_features//8))
         #Now x = (B, max_l//8, channels*(n_mels//8))
-
+        print(x_data.size())
 
         x_data = nn.utils.rnn.pack_padded_sequence(x_data, x_lens,
                                                    batch_first=True,
                                                    enforce_sorted=True)
-
+        # print(x_data.size())
         h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
                          self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
                          self.hidden_size)#.to(device = self.device, dtype=torch.float)
-
+        print(h0.size())
         #LSTM returns: (seq_len, batch, num_directions * hidden_size),
         #              ((num_layers * num_directions, batch, hidden_size), c_n)
         x_data,_ = self.lstm1(x_data, (h0,c0))

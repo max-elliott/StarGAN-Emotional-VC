@@ -26,7 +26,7 @@ if USE_GPU and torch.cuda.is_available():
     device = torch.device('cuda')
 else:
     device = torch.device('cpu')
-print(device)
+print("Device used: ", device)
 
 def save_checkpoint(state, filename='./checkpoint.ckpt'):
 
@@ -67,7 +67,7 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             y = y[:,0].to(device=device, dtype=torch.float)
 
             optimiser.zero_grad()
-
+            print(x_real.size())
             predictions = model(x_real, x_lens)
             #       predictions = predictions.squeeze(0)
             loss = loss_fn(predictions.float(), y.long())
@@ -167,7 +167,7 @@ if __name__=='__main__':
     config = yaml.load(open('./config.yaml', 'r'))
 
     # MAKE TRAIN + TEST SPLIT
-    mel_dir = os.path.join(config['data']['dataset_dir'], "mels")
+    mel_dir = os.path.join(config['data']['dataset_dir'], "world")
 
     files = get_filenames(mel_dir)
     num_emos = config['model']['num_classes']
@@ -186,7 +186,7 @@ if __name__=='__main__':
     train_dataset = my_dataset.MyDataset(config, train_files)
     test_dataset = my_dataset.MyDataset(config, test_files)
 
-    batch_size = 32
+    batch_size = 16
 
     train_loader, test_loader = my_dataset.make_variable_dataloader(train_dataset,
                                                                     test_dataset,

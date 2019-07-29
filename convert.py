@@ -89,49 +89,50 @@ if __name__=='__main__':
         f = os.path.basename(f)[:-4] + ".wav"
         filenames.append(f)
 
-    print(filenames)
+    # print(filenames)
 
     # wav, labels = pp.get_wav_and_labels(filenames[5], config['data']['dataset_dir'])
     # wav = np.array(wav, dtype = np.float64)
     # labels = np.array(labels)
-    # f0, ap, sp, coded_sp = preprocess_world.cal_mcep(wav)
-    #
-    # coded_sp = coded_sp.T
-    #
-    # print(f0.shape)
-    # print(ap.shape)
-    # print(coded_sp.shape)
-    #
-    # coded_sp_torch = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
-    #
-    # fake = model.G(coded_sp_torch, emo_targets[0].unsqueeze(0))
-    #
-    # # print(f[0:-4])
-    # # filename_wav =  f[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
-    # #             str(0) + ".npy"
-    #
-    # fake = fake.squeeze()
-    # print("Sampled size = ",fake.size())
-    # # f = fake.data()
-    # converted_sp = fake.cpu().detach().numpy()
-    # converted_sp = np.array(converted_sp, dtype = np.float64)
+    wav = audio_utils.load_wav("./samples/mario/mario.wav")
+    f0, ap, sp, coded_sp = preprocess_world.cal_mcep(wav)
 
-    # print(f0.shape)
-    # print(ap.shape)
-    # print(converted_sp.shape)
+    coded_sp = coded_sp.T
 
-    # sample_length = converted_sp.shape[0]
-    # if sample_length != ap.shape[0]:
-    #     ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
-    #     f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
-    #
-    # f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
-    # ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
-    # converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
+    print(f0.shape)
+    print(ap.shape)
+    print(coded_sp.shape)
 
-    ## DON'T DO: IS DONE IN SAVE FUNCTION
-    ## coded_sp = audio_utils._unnormalise_coded_sp(coded_sp)
-    ## converted_sp = audio_utils._unnormalise_coded_sp(converted_sp)
+    coded_sp_torch = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
+
+    fake = model.G(coded_sp_torch, emo_targets[0].unsqueeze(0))
+
+    # print(f[0:-4])
+    # filename_wav =  f[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+    #             str(0) + ".npy"
+
+    fake = fake.squeeze()
+    print("Sampled size = ",fake.size())
+    # f = fake.data()
+    converted_sp = fake.cpu().detach().numpy()
+    converted_sp = np.array(converted_sp, dtype = np.float64)
+
+    print(f0.shape)
+    print(ap.shape)
+    print(converted_sp.shape)
+
+    sample_length = converted_sp.shape[0]
+    if sample_length != ap.shape[0]:
+        ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
+        f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
+
+    f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
+    ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
+    converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
+
+    # DON'T DO: IS DONE IN SAVE FUNCTION
+    # coded_sp = audio_utils._unnormalise_coded_sp(coded_sp)
+    # converted_sp = audio_utils._unnormalise_coded_sp(converted_sp)
 
     # h1 = plt.figure(1)
     # n, bins, patches = plt.hist(coded_sp, bins = 20)
@@ -142,12 +143,13 @@ if __name__=='__main__':
     # plt.title(r'New histogram of sequence lengths for 4 emotional categories')
     # plt.show()
 
-    # coded_sp = np.ascontiguousarray(coded_sp[40:-40,:], dtype = np.float64)
+    coded_sp = np.ascontiguousarray(coded_sp[40:-40,:], dtype = np.float64)
 
-    # print(coded_sp[:40,:])
-    # print(converted_sp[:40,:])
+    print(coded_sp[:40,:])
+    print(converted_sp[:40,:])
     # save original sample as well
     # audio_utils.save_world_wav([f0,ap,sp,converted_sp], model.name + '_test', 'angry_95000.wav')
+    audio_utils.save_world_wav([f0,ap,sp,converted_sp], 'mario', 'mario_conv.wav')
 
     # i1 = plt.figure(1)
     # plt.imshow(coded_sp[:40,:])#[1200:1250,2:])
@@ -222,56 +224,56 @@ if __name__=='__main__':
           'Ses02M_script01_1_M038', 'Ses04M_script03_2_M041', 'Ses01F_impro06_F013',
           'Ses01M_script01_1_F029', 'Ses04F_script03_2_F037']
 
-  
+
 
     filenames = [f+".wav" for f in filenames]
     print(filenames[0:3])
     ########################################
     #        WORLD CONVERSION LOOP         #
     ########################################
-    for f in filenames:
-
-        wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
-        wav = np.array(wav, dtype = np.float64)
-        labels = np.array(labels)
-        f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
-        coded_sp = coded_sp.T
-        coded_sp = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
-
-        with torch.no_grad():
-            # print(emo_targets)
-            for i in range (0, emo_targets.size(0)):
-
-                f0 = np.copy(f0_real)
-                ap = np.copy(ap_real)
-                # coded_sp = np.copy(coded_sp)
-
-                fake = model.G(coded_sp, emo_targets[i].unsqueeze(0))
-
-                # print(f"Converting {f[0:-4]}.")
-                filename_wav =  f[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
-                            str(i) + ".wav"
-
-                fake = fake.squeeze()
-                print("Sampled size = ",fake.size())
-                # f = fake.data()
-                converted_sp = fake.cpu().numpy()
-                converted_sp = np.array(converted_sp, dtype = np.float64)
-
-                sample_length = converted_sp.shape[0]
-                if sample_length != ap.shape[0]:
-                    ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
-                    f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
-
-                f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
-                ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
-                converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
-
-                print("ap shape = ", ap.shape)
-                print("f0 shape = ", f0.shape)
-
-                audio_utils.save_world_wav([f0,ap,sp,converted_sp], model.name + '_testSet', filename_wav)
-        print(f, " converted.")
+    # for f in filenames:
+    #
+    #     wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
+    #     wav = np.array(wav, dtype = np.float64)
+    #     labels = np.array(labels)
+    #     f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
+    #     coded_sp = coded_sp.T
+    #     coded_sp = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
+    #
+    #     with torch.no_grad():
+    #         # print(emo_targets)
+    #         for i in range (0, emo_targets.size(0)):
+    #
+    #             f0 = np.copy(f0_real)
+    #             ap = np.copy(ap_real)
+    #             # coded_sp = np.copy(coded_sp)
+    #
+    #             fake = model.G(coded_sp, emo_targets[i].unsqueeze(0))
+    #
+    #             # print(f"Converting {f[0:-4]}.")
+    #             filename_wav =  f[0:-4] + "_" + str(int(labels[0].item())) + "to" + \
+    #                         str(i) + ".wav"
+    #
+    #             fake = fake.squeeze()
+    #             print("Sampled size = ",fake.size())
+    #             # f = fake.data()
+    #             converted_sp = fake.cpu().numpy()
+    #             converted_sp = np.array(converted_sp, dtype = np.float64)
+    #
+    #             sample_length = converted_sp.shape[0]
+    #             if sample_length != ap.shape[0]:
+    #                 ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
+    #                 f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
+    #
+    #             f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
+    #             ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
+    #             converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
+    #
+    #             print("ap shape = ", ap.shape)
+    #             print("f0 shape = ", f0.shape)
+    #
+    #             audio_utils.save_world_wav([f0,ap,sp,converted_sp], model.name + '_testSet', filename_wav)
+    #     print(f, " converted.")
 
     ########################################
     #         MEL CONVERSION LOOP          #
