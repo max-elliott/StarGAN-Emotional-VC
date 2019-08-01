@@ -47,6 +47,8 @@ if __name__ == '__main__':
                     help="Model name for training.")
     parser.add_argument("-c","--checkpoint", type=str, default = None,
                     help="Directory of checkpoint to resume training from")
+    parser.add_argument("--load_emo", type=str, default = None,
+                    help="Directory of pretrained emotional classifier checkpoint to use if desired.")
     parser.add_argument("-s", "--segment_len", type = int, default = None,
                     help="Set utterance length if using fixed lengths")
     parser.add_argument("-e", "--evaluate", action = 'store_true',
@@ -137,19 +139,16 @@ if __name__ == '__main__':
                                                                     test_dataset,
                                                                     batch_size = batch_size)
 
-    # train_iter = iter(train_loader)
-    # x,y = next(train_iter)
-    # print(x[0].size())
-    # Run solver
-    # load_dir = './checkpoints/NewSolver/00006.ckpt'
-    load_dir = args.checkpoint
-
     if args.recon:
         print("Performing reconstruction training.")
-        s = solver_recon.Solver(train_loader, test_loader, config, load_dir = load_dir)
+        s = solver_recon.Solver(train_loader, test_loader, config, load_dir = args.checkpoint)
     else:
         print("Performing whole network training.")
-        s = solver.Solver(train_loader, test_loader, config, load_dir = load_dir)
+        s = solver.Solver(train_loader, test_loader, config, load_dir = args.checkpoint)
+
+    if args.load_emo is not None:
+        s.model.load_pretrained_classifier(args.load_emo, map_location = 'cpu')
+        print("Loaded pre-trained emotional classifier.")
 
     if args.alter:
         print("Changing loaded config to new config.")

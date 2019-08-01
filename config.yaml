@@ -1,6 +1,6 @@
 model:
 
-      name: "world1"
+      name: "load_emo_test"
       num_feats: 36
       batch_size: 4
       use_speaker: False
@@ -16,11 +16,12 @@ loss:
     lambda_cycle: 3
     lambda_id: 2
 
-    num_iters: 10000
-    num_iters_decay: 5000
+    num_iters: 20
+    num_iters_decay: 10
     resume_iters: 0
 
-    c_to_g_ratio: 5
+    train_classifier: False
+    c_to_g_ratio: 1
     c_to_d_ratio: 1
 
 optimizer:
@@ -46,13 +47,13 @@ logs:
     log_every: 1
     sample_every: 1
     test_every: 1
-    model_save_every: 20
+    model_save_every: 999999
 
 data:
 
     dataset_dir: "../data"
     sample_set_dir: '../data/samples/originals'
-    train_test_split: 0.9
+    train_test_split: 0.9992
     normalise_mels: True
     type: 'world'
 

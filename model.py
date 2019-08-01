@@ -55,13 +55,23 @@ class StarGAN_emo_VC1(object):
             self.G.to(device = device)
             self.D.to(device = device)
             self.emo_cls.to(device = device)
-            # self.emo_cls.device = device
+            self.emo_cls.device = device
+
             if self.use_speaker:
                 self.speaker_cls.to(device = device)
             if self.use_dimension:
                 self.dimension_cls.to(device = device)
         else:
             print("Device not available")
+            self.G.to(device = torch.device('cpu'))
+            self.D.to(device = torch.device('cpu'))
+            self.emo_cls.to(device = torch.device('cpu'))
+            self.emo_cls.device = device
+
+            if self.use_speaker:
+                self.speaker_cls.to(device = torch.device('cpu'))
+            if self.use_dimension:
+                self.dimension_cls.to(device = torch.device('cpu'))
 
     def build_model(self):
 
@@ -79,7 +89,8 @@ class StarGAN_emo_VC1(object):
         else:
             self.G = nn.DataParallel(Generator_World(self.num_emotions))
         self.D = nn.DataParallel(Discriminator(self.num_emotions))
-        self.emo_cls = nn.DataParallel(Emotion_Classifier(self.num_input_feats, self.hidden_size,
+        self.emo_cls = nn.DataParallel(Emotion_Classifier(self.num_input_feats,
+                                                    self.hidden_size,
                                                     self.num_layers,
                                                     self.num_emotions,
                                                     bi = self.bi))
@@ -193,10 +204,15 @@ class StarGAN_emo_VC1(object):
 
         print(load_dir)
 
-        if map_location is not None:
-            dictionary = torch.load(load_dir, map_location=map_location)
-        else:
+        # if map_location is not None:
+        #     dictionary = torch.load(load_dir, map_location=map_location)
+        # else:
+        #     dictionary = torch.load(load_dir)
+
+        if torch.cuda.is_available():
             dictionary = torch.load(load_dir)
+        else:
+            dictionary = torch.load(load_dir, map_location='cpu')
 
         self.config = dictionary['config']
         self.use_speaker = self.config['model']['use_speaker']
@@ -231,6 +247,17 @@ class StarGAN_emo_VC1(object):
             self.use_dimension = False
 
         print("Model and optimizers loaded.")
+
+    def load_pretrained_classifier(self, load_dir, map_location = None):
+
+        if map_location is not None:
+            dictionary = torch.load(load_dir, map_location=map_location)
+        else:
+            dictionary = torch.load(load_dir)
+
+        con_opt = self.config['optimizer']
+        self.emo_cls.load_state_dict(dictionary['model_state_dict'])
+        self.emo_cls_optimizer = torch.optim.Adam(self.emo_cls.parameters(), con_opt['emo_cls_lr'],[con_opt['beta1'], con_opt['beta2']],weight_decay = 0.000001)
 
 class Down2d(nn.Module):
     """docstring for Down2d."""

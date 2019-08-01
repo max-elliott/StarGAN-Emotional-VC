@@ -151,6 +151,8 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Training loop for classifier only.')
     parser.add_argument("-c","--checkpoint", type=str, default = None,
                     help="Directory of checkpoint to resume training from")
+    parser.add_argument("-n","--num_emos", type=int, default = 4,
+                    help="Number of emotions to classify")
     args = parser.parse_args()
 
     SEED = 42
@@ -170,7 +172,7 @@ if __name__=='__main__':
     mel_dir = os.path.join(config['data']['dataset_dir'], "world")
 
     files = get_filenames(mel_dir)
-    num_emos = config['model']['num_classes']
+    num_emos = args.num_emos
     label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
     files = my_dataset.shuffle(files)
@@ -198,8 +200,8 @@ if __name__=='__main__':
 
     print("Making model")
 
-    model = classifiers.Emotion_Classifier(input_size, hidden_size,
-                     num_layers = num_layers, num_classes = num_emos, bi = True)
+    model = nn.DataParallel(classifiers.Emotion_Classifier(input_size, hidden_size,
+                     num_layers = num_layers, num_classes = num_emos, bi = True))
     optimiser = optim.Adam(model.parameters(), lr=0.0001, weight_decay = 0.000001)
 
     loss_fn = nn.CrossEntropyLoss(weight = emo_loss_weights)

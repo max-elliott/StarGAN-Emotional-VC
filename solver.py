@@ -132,6 +132,8 @@ class Solver(object):
             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Iteration {:02}/{:02} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~".format(i,self.num_iters))
             print("Iteration {:02} lr = {:.6f}".format(i, self.model.d_optimizer.param_groups[0]['lr']))
             self.model.to_device(device = self.device)
+            print("Device is ", self.device)
+            print("Classifier device is ", self.model.emo_cls.device)
             self.model.set_train_mode()
 
             self.current_iter = i
@@ -165,41 +167,45 @@ class Solver(object):
             #############################################################
             #                    TRAIN CLASSIFIERS                      #
             #############################################################
-            print('Training Classifiers...')
-
-            self.model.reset_grad()
             ce_weighted_loss_fn = nn.CrossEntropyLoss(weight = self.emo_loss_weights)
 
-            # Train with x_real
-            preds_emo_real = self.model.emo_cls(x_real, x_lens)
+            if self.config['loss']['train_classifier']:
+                print('Training Classifiers...')
 
-            c_emo_real_loss = ce_weighted_loss_fn(preds_emo_real, emo_labels)
-
-            c_emo_real_loss.backward()
-            self.model.emo_cls_optimizer.step()
-
-            if self.model.use_speaker:
                 self.model.reset_grad()
 
                 # Train with x_real
-                preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
+                preds_emo_real = self.model.emo_cls(x_real, x_lens)
 
-                c_speaker_real_loss = ce_loss_fn(preds_speaker_real, spk_labels)
+                c_emo_real_loss = ce_weighted_loss_fn(preds_emo_real, emo_labels)
 
-                c_speaker_real_loss.backward()
-                self.model.speaker_cls_optimizer.step()
+                c_emo_real_loss.backward()
+                self.model.emo_cls_optimizer.step()
 
-            if self.model.use_dimension:
-                self.model.reset_grad()
+                if self.model.use_speaker:
+                    self.model.reset_grad()
 
-                # Train with x_real
-                preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
+                    # Train with x_real
+                    preds_speaker_real = self.model.speaker_cls(x_real, x_lens)
 
-                #;;; DO FOR MULTILABEL
-                c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
+                    c_speaker_real_loss = ce_loss_fn(preds_speaker_real, spk_labels)
 
-                c_speaker_real_loss.backward()
-                self.model.speaker_cls_optimizer.step()
+                    c_speaker_real_loss.backward()
+                    self.model.speaker_cls_optimizer.step()
+
+                if self.model.use_dimension:
+                    self.model.reset_grad()
+
+                    # Train with x_real
+                    preds_dimension_real = self.model.dimension_cls(x_real, x_lens)
+
+                    #;;; DO FOR MULTILABEL
+                    c_dimension_real_loss = ce_loss_fn(preds_dimension_real, dim_labels)
+
+                    c_speaker_real_loss.backward()
+                    self.model.speaker_cls_optimizer.step()
+            else:
+                print('No classifier training this run.')
 
             #############################################################
             #                    TRAIN DISCRIMINATOR                    #
@@ -283,7 +289,8 @@ class Solver(object):
             #############################################################
             if i % self.log_every == 0:
                 loss = {}
-                loss['C/emo_real_loss'] = c_emo_real_loss.item()
+                if self.config['loss']['train_classifier']:
+                    loss['C/emo_real_loss'] = c_emo_real_loss.item()
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
                 loss['G/emo_loss'] = loss_g_emo_cls.item()
@@ -293,13 +300,15 @@ class Solver(object):
                 loss['D/preds_real'] = d_preds_real.mean().item()
                 loss['D/preds_fake'] = d_preds_fake.mean().item()
 
-                if self.use_speaker:
-                    loss['C/spk_real_loss'] = c_speaker_real_loss.item()
-                    loss['G/spk_loss'] = loss_g_spk_cls.item()
+                if self.config['loss']['train_classifier']:
+                    loss['C/emo_real_loss'] = c_emo_real_loss.item()
+                    if self.use_speaker:
+                        loss['C/spk_real_loss'] = c_speaker_real_loss.item()
+                        loss['G/spk_loss'] = loss_g_spk_cls.item()
 
-                if self.use_dimension:
-                    loss['C/dim_real_loss'] = c_dimension_real_loss_real_loss.item()
-                    loss['G/dim_loss'] = loss_g_dim_cls.item()
+                    if self.use_dimension:
+                        loss['C/dim_real_loss'] = c_dimension_real_loss_real_loss.item()
+                        loss['G/dim_loss'] = loss_g_dim_cls.item()
 
                 for name, val in loss.items():
                     print("{:20} = {:.4f}".format(name, val))
