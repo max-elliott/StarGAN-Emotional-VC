@@ -20,12 +20,12 @@ loss:
     num_iters_decay: 5000
     resume_iters: 0
 
-    c_to_g_ratio: 1
+    c_to_g_ratio: 5
     c_to_d_ratio: 1
 
 optimizer:
 
-    beta1: 0.9
+    beta1: 0.5
     beta2: 0.999
 
     g_lr: 0.0001
@@ -52,7 +52,7 @@ data:
 
     dataset_dir: "../data"
     sample_set_dir: '../data/samples/originals'
-    train_test_split: 0.999
+    train_test_split: 0.9
     normalise_mels: True
     type: 'world'
 

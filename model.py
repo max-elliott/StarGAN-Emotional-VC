@@ -164,6 +164,7 @@ class StarGAN_emo_VC1(object):
                  'emo_opt': self.emo_cls_optimizer.state_dict(),
                  'config': self.config
                 }
+
         if self.use_speaker:
             state['spk'] = self.speaker_cls.state_dict()
             state['spk_opt'] = self.speaker_cls_optimizer.state_dict()
@@ -201,6 +202,7 @@ class StarGAN_emo_VC1(object):
         self.use_speaker = self.config['model']['use_speaker']
         self.use_dimension = self.config['model']['use_dimension']
         self.name = self.config['model']['name']
+        self.num_emotions = self.config['model']['num_classes']
 
         self.D.load_state_dict(dictionary['D'])
         self.G.load_state_dict(dictionary['G'])

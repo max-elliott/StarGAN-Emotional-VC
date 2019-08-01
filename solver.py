@@ -129,7 +129,7 @@ class Solver(object):
         # main training loop
         for i in range(start_iter, self.num_iters+1):
 
-            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Iteration {:02} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~".format(i))
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Iteration {:02}/{:02} ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~".format(i,self.num_iters))
             print("Iteration {:02} lr = {:.6f}".format(i, self.model.d_optimizer.param_groups[0]['lr']))
             self.model.to_device(device = self.device)
             self.model.set_train_mode()

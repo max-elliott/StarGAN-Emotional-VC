@@ -119,7 +119,7 @@ if __name__ == '__main__':
     train_files = files[:split_index]
     test_files = files[split_index:]
 
-    print(test_files)
+    # print(test_files)
 
     print(f"Training samples: {len(train_files)}")
     print(f"Test samples: {len(test_files)}")
@@ -137,8 +137,8 @@ if __name__ == '__main__':
                                                                     test_dataset,
                                                                     batch_size = batch_size)
 
-    train_iter = iter(train_loader)
-    x,y = next(train_iter)
+    # train_iter = iter(train_loader)
+    # x,y = next(train_iter)
     # print(x[0].size())
     # Run solver
     # load_dir = './checkpoints/NewSolver/00006.ckpt'

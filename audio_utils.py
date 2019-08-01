@@ -79,11 +79,12 @@ def _unnormalise_mel(mel):
 
 def _normalise_coded_sp(sp):
     sp = (sp - hp.sp_min_norm_value)/(hp.sp_max_norm_value - hp.sp_min_norm_value)
-    np.clip(sp, hp.sp_min_norm_value, hp.sp_max_norm_value)
+
     return sp
 
 def _unnormalise_coded_sp(sp):
     sp = (hp.sp_max_norm_value - hp.sp_min_norm_value) * sp + hp.sp_min_norm_value
+    np.clip(sp, hp.sp_min_norm_value, hp.sp_max_norm_value)
     return sp
 
 def wav2melspectrogram(y, sr = hp.sr, n_mels = hp.n_mels):
