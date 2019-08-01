@@ -96,7 +96,9 @@ class Solver(object):
 
         self.sample_dir = self.config['logs']['sample_dir']
         self.sample_every = self.config['logs']['sample_every']
-        self.test_every = self.config['logs']['test_every']
+
+        if 'test_every' in self.config['logs']:
+            self.test_every = self.config['logs']['test_every']
 
         self.model_save_dir = self.config['logs']['model_save_dir']
         self.model_save_every = self.config['logs']['model_save_every']
