@@ -104,6 +104,7 @@ class Solver(object):
         self.model_save_every = self.config['logs']['model_save_every']
 
         self.model_name = self.config['model']['name']
+        self.model.name = self.model_name
 
         if self.use_tensorboard:
             self.logger = Logger(self.config['logs']['log_dir'], self.model_name)
