@@ -107,7 +107,7 @@ if __name__=='__main__':
 
     checkpoint_dir = '../downloaded/checkpoints/' + args.model + '/' + args.iteration + '.ckpt'
     # checkpoint_dir = '../downloaded/checkpoints/world2_full_2/160000.ckpt'
-    out_dir = './samples'
+
     print("Loading model at ", checkpoint_dir)
 
     if args.in_dir == 'sample':
@@ -248,6 +248,8 @@ if __name__=='__main__':
                 f0 = np.copy(f0_real)
                 ap = np.copy(ap_real)
                 # coded_sp = np.copy(coded_sp)
+                f0 = audio_utils.f0_pitch_conversion(f0, (labels[0],labels[1]),
+                                                         (i, labels[1]))
 
                 fake = model.G(coded_sp, emo_targets[i].unsqueeze(0))
 
@@ -273,8 +275,8 @@ if __name__=='__main__':
                 print("ap shape = ", ap.shape)
                 print("f0 shape = ", f0.shape)
 
-                name = str(args.iteration)[0:3]
-                audio_utils.save_world_wav([f0,ap,sp,converted_sp], model.name +"_"+ name+'_testSet', filename_wav)
+                it = str(args.iteration)[0:3]
+                audio_utils.save_world_wav([f0,ap,sp,converted_sp], args.out_dir +"_"+ it+'_testSet', filename_wav)
         print(f, " converted.")
 
     ########################################

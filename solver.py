@@ -41,8 +41,8 @@ class Solver(object):
         self.config = config
 
         self.model_name = self.config['model']['name']
-        self.set_configuration()
         self.model = model.StarGAN_emo_VC1(self.config, self.model_name)
+        self.set_configuration()
         self.model = self.model
 
         if not load_dir == None:

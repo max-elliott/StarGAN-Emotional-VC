@@ -3,6 +3,7 @@ from scipy.io import wavfile
 import os
 import yaml
 import copy
+import pickle
 
 import librosa
 import librosa.display
@@ -44,6 +45,14 @@ class hyperparams(object):
         self.sp_max_norm_value = 6.482182376067761
         self.sp_min_norm_value = -18.50642857581744
 
+        with open('./f0_dict.pkl', 'rb') as fp:
+            self.f0_dict = pickle.load(fp)
+
+        # for tag, val in self.f0_dict.items():
+        #     print(f'Emotion {tag} stats:')
+        #     for tag2, val2 in val.items():
+        #         print(f'{tag2} = {val2[0]}, {val2[1]}')
+
 hp = hyperparams()
 
 def load_wav(path):
@@ -52,7 +61,11 @@ def load_wav(path):
     return wav
 
 def save_wav(wav, path):
-    wav *= 32767 / max(0.01, np.max(np.abs(wav)))
+    # print(32767 / max(0.01, np.max(np.abs(wav))))
+    # wav *= 32767 / max(0.01, np.max(np.abs(wav)))
+
+    wav *= 64000
+    wav = np.clip(wav, -32767, 32767)
     wavfile.write(path, hp.sr, wav.astype(np.int16))
 
 def wav2spectrogram(y, sr = hp.sr):
@@ -263,6 +276,28 @@ def save_world_wav(feats, model_name, filename):
     # print("Sythesized wav.")
     save_wav(wav, path)
     print("Saved wav.")
+
+def f0_pitch_conversion(f0, source_labels, target_labels):
+    '''
+    Logarithm Gaussian normalization for Pitch Conversions
+    (np.array) f0 - array to be converted
+    (tuple) source_labels - (emo, speaker) discrete labels
+    (tuple) target_labels - (emo, speaker) discrete labels
+    '''
+    src_emo = int(source_labels[0])
+    src_spk = int(source_labels[1])
+    trg_emo = int(target_labels[0])
+    trg_spk = int(target_labels[1])
+
+    mean_log_src = hp.f0_dict[src_emo][src_spk][0]
+    std_log_src = hp.f0_dict[src_emo][src_spk][1]
+
+    mean_log_target = hp.f0_dict[trg_emo][src_spk][0]
+    std_log_target = hp.f0_dict[trg_emo][src_spk][1]
+
+    f0_converted = np.exp((np.ma.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
+
+    return f0_converted
 
 if __name__ == '__main__':
 
