@@ -20,7 +20,7 @@ loss:
     num_iters_decay: 10
     resume_iters: 0
 
-    train_classifier: False
+    train_classifier: True
     c_to_g_ratio: 1
     c_to_d_ratio: 1
 
