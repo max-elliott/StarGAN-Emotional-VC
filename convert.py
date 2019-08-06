@@ -238,6 +238,8 @@ if __name__=='__main__':
         wav = np.array(wav, dtype = np.float64)
         labels = np.array(labels)
         f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
+        coded_sp_temp = np.copy(coded_sp).T
+        print(coded_sp_temp.shape)
         coded_sp = coded_sp.T
         coded_sp = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
 
@@ -247,6 +249,7 @@ if __name__=='__main__':
 
                 f0 = np.copy(f0_real)
                 ap = np.copy(ap_real)
+                coded_sp_temp_copy = np.copy(coded_sp_temp)
                 # coded_sp = np.copy(coded_sp)
                 f0 = audio_utils.f0_pitch_conversion(f0, (labels[0],labels[1]),
                                                          (i, labels[1]))
@@ -265,18 +268,20 @@ if __name__=='__main__':
 
                 sample_length = converted_sp.shape[0]
                 if sample_length != ap.shape[0]:
+                    coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[0:sample_length, :], dtype = np.float64)
                     ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
                     f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
 
                 f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
                 ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
                 converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
+                coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[40:-40,:], dtype = np.float64)
 
                 print("ap shape = ", ap.shape)
                 print("f0 shape = ", f0.shape)
-
+                print(converted_sp.shape)
                 it = str(args.iteration)[0:3]
-                audio_utils.save_world_wav([f0,ap,sp,converted_sp], args.out_dir +"_"+ it+'_testSet', filename_wav)
+                audio_utils.save_world_wav([f0,ap,sp,coded_sp_temp_copy], args.out_dir +"_"+ it+'_testSet', filename_wav)
         print(f, " converted.")
 
     ########################################

@@ -146,6 +146,7 @@ class Solver(object):
             try:
                 x, labels = next(data_iter)
             except:
+                print("In here")
                 data_iter = iter(self.train_loader)
                 x, labels = next(data_iter)
 

@@ -47,7 +47,7 @@ logs:
     log_every: 1
     sample_every: 1
     test_every: 1
-    model_save_every: 999999
+    model_save_every: 1
 
 data:
 
