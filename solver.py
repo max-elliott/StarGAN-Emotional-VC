@@ -254,7 +254,7 @@ class Solver(object):
                 x_cycle = self.model.G(x_fake, emo_labels_ones)
                 x_id = self.model.G(x_real, emo_labels_ones)
                 d_preds_for_g = self.model.D(x_fake, emo_targets_ones)
-                preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
+                # preds_emo_fake = self.model.emo_cls(x_fake, x_fake_lens)
 
 
                 # x_cycle = self.make_equal_length(x_cycle, x_real)
@@ -265,11 +265,11 @@ class Solver(object):
                 loss_g_fake = - d_preds_for_g.mean()
                 loss_cycle = l1_loss_fn(x_cycle, x_real)
                 loss_id = l1_loss_fn(x_id, x_real)
-                loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
+                # loss_g_emo_cls = ce_weighted_loss_fn(preds_emo_fake, emo_targets)
 
                 g_loss = loss_g_fake + self.lambda_id * loss_id + \
-                                       self.lambda_cycle * loss_cycle + \
-                                       self.lambda_g_emo_cls * loss_g_emo_cls
+                                       self.lambda_cycle * loss_cycle# + \
+                                       # self.lambda_g_emo_cls * loss_g_emo_cls
 
                 if self.use_speaker:
 
@@ -297,7 +297,7 @@ class Solver(object):
                     loss['C/emo_real_loss'] = c_emo_real_loss.item()
                 loss['D/total_loss'] = d_loss.item()
                 loss['G/total_loss'] = g_loss.item()
-                loss['G/emo_loss'] = loss_g_emo_cls.item()
+                # loss['G/emo_loss'] = loss_g_emo_cls.item()
                 loss['D/gradient_penalty'] = grad_penalty.item()
                 loss['G/loss_cycle'] = loss_cycle.item()
                 loss['G/loss_id'] = loss_id.item()
