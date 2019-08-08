@@ -301,11 +301,12 @@ def f0_pitch_conversion(f0, source_labels, target_labels):
 
 if __name__ == '__main__':
 
-    files = librosa.util.find_files("/Users/Max/MScProject/data/samples/originals")
-    # print(files[0])
-    for file in files:
-        wav = load_wav(file)
-        mel = wav2melspectrogram(wav)
+    # hp.normalise_mels = False
+    # files = librosa.util.find_files("/Users/Max/MScProject/data/samples/originals")
+    file = './samples/f0s/world2_crop_4d_200_200_testSet/Ses01F_impro02_F014_1to1.wav'
 
-        name = os.path.basename(file)
-        save_spec_plot(mel, "None", name + ".png")
+    wav = load_wav(file)
+    mel = wav2melspectrogram(wav)
+
+    name = os.path.basename(file)
+    save_spec_plot(mel, "world2_4d_mels", name + "linear.png")

@@ -1,11 +1,11 @@
 model:
 
-      name: "load_emo_test"
+      name: "load_3emo_test"
       num_feats: 36
       batch_size: 4
       use_speaker: False
       use_dimension: False
-      num_classes: 2
+      num_classes: 3
 
 loss:
 
@@ -20,7 +20,7 @@ loss:
     num_iters_decay: 10
     resume_iters: 0
 
-    train_classifier: False
+    train_classifier: True
     c_to_g_ratio: 1
     c_to_d_ratio: 1
 

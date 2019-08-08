@@ -120,6 +120,17 @@ if __name__=='__main__':
             filenames.append(f)
 
         print("Converting sample set.")
+    elif args.in_dir == 'neutral':
+        in_dir = '../data/audio'
+        files = find_files(in_dir, ext = 'wav')
+        filenames = [os.path.basename(f)[:-4] + ".wav" for f in files]
+
+        filenames = [f for f in filenames if pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][0]==3]
+        random.shuffle(filenames)
+        filenames = filenames[0:30]
+
+        print(len(filenames))
+
     else:
         # Is Test Set
         filenames = ['Ses05F_impro04_F023', 'Ses05M_script01_1_M035', 'Ses05F_impro02_F005',
@@ -225,9 +236,14 @@ if __name__=='__main__':
 
     # for one_hot in emo_targets:
     #     _single_conversion(filenames[0], model, one_hot)
-
+    all_labels = []
     # print(filenames)
-
+    # for f in filenames:
+    #
+    #     wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
+    #     all_labels.append(labels[0])
+    #
+    # print(all_labels)
 
     ########################################
     #        WORLD CONVERSION LOOP         #
@@ -238,8 +254,8 @@ if __name__=='__main__':
         wav = np.array(wav, dtype = np.float64)
         labels = np.array(labels)
         f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
-        coded_sp_temp = np.copy(coded_sp).T
-        print(coded_sp_temp.shape)
+        # coded_sp_temp = np.copy(coded_sp).T
+        # print(coded_sp_temp.shape)
         coded_sp = coded_sp.T
         coded_sp = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
 
@@ -249,7 +265,7 @@ if __name__=='__main__':
 
                 f0 = np.copy(f0_real)
                 ap = np.copy(ap_real)
-                coded_sp_temp_copy = np.copy(coded_sp_temp)
+                # coded_sp_temp_copy = np.copy(coded_sp_temp)
                 # coded_sp = np.copy(coded_sp)
                 f0 = audio_utils.f0_pitch_conversion(f0, (labels[0],labels[1]),
                                                          (i, labels[1]))
@@ -268,20 +284,20 @@ if __name__=='__main__':
 
                 sample_length = converted_sp.shape[0]
                 if sample_length != ap.shape[0]:
-                    coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[0:sample_length, :], dtype = np.float64)
+                    # coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[0:sample_length, :], dtype = np.float64)
                     ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
                     f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
 
                 f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
                 ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
                 converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
-                coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[40:-40,:], dtype = np.float64)
+                # coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[40:-40,:], dtype = np.float64)
 
                 print("ap shape = ", ap.shape)
                 print("f0 shape = ", f0.shape)
                 print(converted_sp.shape)
                 it = str(args.iteration)[0:3]
-                audio_utils.save_world_wav([f0,ap,sp,coded_sp_temp_copy], args.out_dir +"_"+ it+'_testSet', filename_wav)
+                audio_utils.save_world_wav([f0,ap,sp,converted_sp], args.out_dir +"_"+ it+'_testSet', filename_wav)
         print(f, " converted.")
 
     ########################################
