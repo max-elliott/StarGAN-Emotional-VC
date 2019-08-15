@@ -71,10 +71,10 @@ class Emotion_Classifier(nn.Module):
                                                    enforce_sorted=True)
         # print(x_data.size())
         h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
         # print(h0.size())
         #LSTM returns: (seq_len, batch, num_directions * hidden_size),
         #              ((num_layers * num_directions, batch, hidden_size), c_n)
@@ -120,20 +120,20 @@ class Dimension_Classifier(nn.Module):
         self.maxpool3 = nn.MaxPool2d(2, stride = 2)
 
         self.valence_predictor = Single_Dimension_Classifier(
-                        input_size = (self.input_size*self.num_outchannels)//8,
+                        input_size = self.input_size*(self.num_outchannels//8),
                         hidden_size = self.hidden_size,
                         num_layers = self.num_layers,
                         bi = bi, device = device)
         self.arousal_predictor = Single_Dimension_Classifier(
-                        input_size = (self.input_size*self.num_outchannels)//8,
+                        input_size = self.input_size*(self.num_outchannels//8),
                         hidden_size = self.hidden_size,
                         num_layers = self.num_layers,
                         bi = bi, device = device)
-        self.dominance_predictor = Single_Dimension_Classifier(
-                        input_size = (self.input_size*self.num_outchannels)//8,
-                        hidden_size = self.hidden_size,
-                        num_layers = self.num_layers,
-                        bi = bi, device = device)
+        # self.dominance_predictor = Single_Dimension_Classifier(
+        #                 input_size = (self.input_size*self.num_outchannels)//8,
+        #                 hidden_size = self.hidden_size,
+        #                 num_layers = self.num_layers,
+        #                 bi = bi, device = device)
 
     def forward(self, x_data, x_lens):
         '''
@@ -167,10 +167,10 @@ class Dimension_Classifier(nn.Module):
         #PASS INTO 3 single_dim_predictors
         x_val = self.valence_predictor(x_data, batch_size)
         x_aro = self.arousal_predictor(x_data, batch_size)
-        x_dom = self.dominance_predictor(x_data, batch_size)
+        # x_dom = self.dominance_predictor(x_data, batch_size)
 
 
-        return x_val, x_aro, x_dom
+        return x_val, x_aro#, x_dom
 
 class Single_Dimension_Classifier(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, bi = False, device = 'cuda'):
@@ -196,10 +196,10 @@ class Single_Dimension_Classifier(nn.Module):
 
 
         h0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         c0 = torch.zeros(self.m_factor*self.num_layers, batch_size,
-                         self.hidden_size).to(device = self.device, dtype=torch.float)
+                         self.hidden_size)#.to(device = self.device, dtype=torch.float)
 
         #LSTM returns: (seq_len, batch, num_directions * hidden_size),
         #              ((num_layers * num_directions, batch, hidden_size), c_n)

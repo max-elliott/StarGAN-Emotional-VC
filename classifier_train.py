@@ -47,8 +47,9 @@ def load_checkpoint(model, optimiser, filename = './checkpoint.pth'):
 def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
                 model_type = 'cls', epochs=1, print_every = 1, var_len_data = False, start_epoch = 1):
 
-    model = model.to(device=device)  # move the model parameters to CPU/GPU
+    model = model.to(device=device) # move the model parameters to CPU/GPU
 
+    print("Training model type: ", model_type)
     best_model_score = 0.  #best f1_score for saving checkpoints
 
     for e in range(start_epoch, epochs+1):
@@ -69,8 +70,23 @@ def train_model(model, optimiser, train_data_loader, val_data_loader, loss_fn,
             optimiser.zero_grad()
             # print(x_real.size())
             predictions = model(x_real, x_lens)
-            #       predictions = predictions.squeeze(0)
-            loss = loss_fn(predictions.float(), y.long())
+
+            if(model_type == 'dim'):
+                y_val = y[:,0].long()
+                y_aro = y[:,1].long()
+                y_dom = y[:,2].long()
+#                 print(y_val.size())
+#                 print("predictions[0]:", predictions[0].size())
+#                 print("predictions[1]:", predictions[1].size())
+                loss_val = loss_fn(predictions[0].float(), y_val)
+                loss_aro = loss_fn(predictions[1].float(), y_aro)
+                loss_dom = loss_fn(predictions[2].float(), y_aro)
+
+                loss = loss_val + loss_aro + loss_dom
+
+            else:
+                loss = loss_fn(predictions.float(), y.long())
+
             loss.backward()
             optimiser.step()
 
@@ -114,8 +130,14 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
     model.eval()
 
     actual_preds = torch.rand(0).to(device = device, dtype = torch.long)
+    actual_preds_val = torch.rand(0).to(device = device, dtype = torch.long)
+    actual_preds_aro = torch.rand(0).to(device = device, dtype = torch.long)
+    # actual_preds_dom = torch.rand(0).to(device = device, dtype = torch.long)
 
     total_y = torch.rand(0).to(device = device, dtype = torch.long)
+    total_y_val = torch.rand(0).to(device = device, dtype = torch.long)
+    total_y_aro = torch.rand(0).to(device = device, dtype = torch.long)
+    # total_y_dom = torch.rand(0).to(device = device, dtype = torch.long)
 
     for i, (x,y) in enumerate(test_loader):
 
@@ -130,19 +152,61 @@ def test_model(model, test_loader, var_len_data = False, model_type = 'cls'):
 
         preds = model(x_real, x_lens)
 
-        preds = torch.max(preds, dim = 1)[1]
+        if(model_type == 'dim'):
+            y_val = y[:,0].long()
+            y_aro = y[:,1].long()
+            y_dom = y[:,2].long()
 
-        actual_preds = torch.cat((actual_preds, preds), dim=0)
-        total_y = torch.cat((total_y, y), dim=0)
+            preds_val = torch.max(preds[0], dim = 1)[1]
+            preds_aro = torch.max(preds[1], dim = 1)[1]
+            # preds_dom = torch.max(preds[2], dim = 1)[1]
+
+            actual_preds_val = torch.cat((actual_preds_val, preds_val), dim=0)
+            actual_preds_aro = torch.cat((actual_preds_aro, preds_aro), dim=0)
+            # actual_preds_dom = torch.cat((actual_preds_dom, preds_dom), dim=0)
+
+            total_y_val = torch.cat((total_y_val, y_val), dim=0)
+            total_y_aro = torch.cat((total_y_aro, y_aro), dim=0)
+            # total_y_dom = torch.cat((total_y_dom, y_dom), dim=0)
+
+        else:
+            preds = torch.max(preds, dim = 1)[1]
+
+            actual_preds = torch.cat((actual_preds, preds), dim=0)
+            total_y = torch.cat((total_y, y), dim=0)
 
 
 
-    print(actual_preds.size()[0], "total validation predictions.")
-    print(actual_preds[0:100])
+    if(model_type == 'dim'):
 
-    acc = accuracy_score(total_y.cpu(), actual_preds.cpu())
-    f1 = f1_score(total_y.cpu(), actual_preds.cpu(), average = 'macro')
-    UAR = recall_score(total_y.cpu(), actual_preds.cpu(), average = 'weighted')
+        # print(actual_preds_val[0:100])
+        # print(actual_preds_aro[0:100])
+        # print(actual_preds_dom[0:100])
+        print(actual_preds_val.size()[0], "total validation predictions.")
+
+        acc_val = accuracy_score(total_y_val.cpu(), actual_preds_val.cpu())
+        acc_aro = accuracy_score(total_y_aro.cpu(), actual_preds_aro.cpu())
+        # acc_dom = accuracy_score(total_y_dom.cpu(), actual_preds_dom.cpu())
+
+        UAR_val = recall_score(total_y_val.cpu(), actual_preds_val.cpu(), average = 'weighted')
+        UAR_aro = recall_score(total_y_aro.cpu(), actual_preds_aro.cpu(), average = 'weighted')
+        # UAR_dom = recall_score(total_y_dom.cpu(), actual_preds_dom.cpu(), average = 'weighted')
+#         print(f"UAR_val = {UAR_val: .3f}, UAR_aro = {UAR_aro: .3f}")
+
+        f1_val = f1_score(total_y_val.cpu(), actual_preds_val.cpu(), average = 'macro')
+        f1_aro = f1_score(total_y_aro.cpu(), actual_preds_aro.cpu(), average = 'macro')
+        # f1_dom = f1_score(total_y_dom.cpu(), actual_preds_dom.cpu(), average = 'macro')
+
+        return [acc_val, acc_aro], [f1_val,f1_aro], [UAR_val, UAR_aro]
+
+    else:
+
+        print(actual_preds.size()[0], "total validation predictions.")
+        print(actual_preds[0:100])
+
+        acc = accuracy_score(total_y.cpu(), actual_preds.cpu())
+        f1 = f1_score(total_y.cpu(), actual_preds.cpu(), average = 'macro')
+        UAR = recall_score(total_y.cpu(), actual_preds.cpu(), average = 'weighted')
 
     return acc, f1, UAR
 
@@ -175,6 +239,7 @@ if __name__=='__main__':
     num_emos = args.num_emos
     label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
+    files = files[:100]
     files = my_dataset.shuffle(files)
 
     train_test_split = config['data']['train_test_split']
@@ -200,8 +265,10 @@ if __name__=='__main__':
 
     print("Making model")
 
-    model = nn.DataParallel(classifiers.Emotion_Classifier(input_size, hidden_size,
-                     num_layers = num_layers, num_classes = num_emos, bi = True))
+    # model = nn.DataParallel(classifiers.Emotion_Classifier(input_size, hidden_size,
+    #                  num_layers = num_layers, num_classes = num_emos, bi = True))
+    model = nn.DataParallel(classifiers.Dimension_Classifier(input_size, hidden_size,
+                     num_layers = num_layers, bi = True))
     optimiser = optim.Adam(model.parameters(), lr=0.0001, weight_decay = 0.000001)
 
     loss_fn = nn.CrossEntropyLoss(weight = emo_loss_weights)
@@ -213,5 +280,5 @@ if __name__=='__main__':
 
 
     print("Running training")
-    train_model(model, optimiser, train_loader, test_loader, loss_fn,
+    train_model(model, optimiser, train_loader, test_loader, loss_fn, model_type='dim',
                 epochs = n_epochs, var_len_data = True, start_epoch=epoch)

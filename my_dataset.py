@@ -129,6 +129,7 @@ def collate_length_order(batch):
     for i,seq in enumerate(sequences):
         if seq.size(0) > 512:
             start_index = random.randint(0, seq.size(0)-512)
+            # print(start_index)
             sequences[i] = seq[start_index:start_index+512,:]
         # (seq[i] = seq[:512,:]) if seq.size(0) > 512 else seq[i] = seq
 

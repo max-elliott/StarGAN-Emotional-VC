@@ -48,6 +48,9 @@ class hyperparams(object):
         with open('./f0_dict.pkl', 'rb') as fp:
             self.f0_dict = pickle.load(fp)
 
+        with open('./f0_relative_dict.pkl', 'rb') as fp:
+            self.f0_relative_dict = pickle.load(fp)
+
         # for tag, val in self.f0_dict.items():
         #     print(f'Emotion {tag} stats:')
         #     for tag2, val2 in val.items():
@@ -297,16 +300,93 @@ def f0_pitch_conversion(f0, source_labels, target_labels):
 
     f0_converted = np.exp((np.ma.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
 
+    # f0_converted = np.exp(np.ma.log(f0)*(hp.f0_relative_dict[src_emo][trg_emo][1]+1) + hp.f0_relative_dict[src_emo][trg_emo][0])
+
     return f0_converted
 
 if __name__ == '__main__':
 
     # hp.normalise_mels = False
     # files = librosa.util.find_files("/Users/Max/MScProject/data/samples/originals")
-    file = './samples/f0s/world2_crop_4d_200_200_testSet/Ses01F_impro02_F014_1to1.wav'
+    # file = './samples/f0s/world2_crop_4d_200_200_testSet/Ses01F_impro02_F014_1to0.wav'
+    #
+    # wav = load_wav(file)
+    # spec = wav2melspectrogram(wav)
+    #
+    # if hp.normalise_mels:
+    #     spec = _unnormalise_mel(spec)
+    #
+    # fig = plt.figure(figsize=(12, 4))
+    # ax1 = fig.add_subplot(1, 2, 1)
+    #
+    # # plt.subplot(1, 2, 1)
+    # librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
+    #                         hop_length=hp.hop_length)
+    #                                                 # fmin=None, fmax=4000)
+    # plt.colorbar(format='%+2.0f dB')
+    # plt.title('Power spectrogram angry')
+    #
+    # file = './samples/f0s/world2_crop_4d_200_200_testSet/Ses01F_impro02_F014_1to1.wav'
+    #
+    # wav = load_wav(file)
+    # spec = wav2melspectrogram(wav)
+    #
+    # if hp.normalise_mels:
+    #     spec = _unnormalise_mel(spec)
+    #
+    #
+    # # plt.subplot(1, 2, 2)
+    # ax2 = fig.add_subplot(1, 2, 2, sharey=ax1)
+    # librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
+    #                         hop_length=hp.hop_length)
+    #                                                 # fmin=None, fmax=4000)
+    # plt.colorbar(format='%+2.0f dB')
+    # plt.title('Power spectrogram sad')
+    #
+    # plt.savefig('../graphs/world2_full_4d/fig.png')
+    # # plt.close(fig)
+    # plt.close("all")
 
-    wav = load_wav(file)
-    mel = wav2melspectrogram(wav)
+    # name = os.path.basename(file)
+    # save_spec_plot(mel, "world2_4d_mels", name + "linear.png")
 
-    name = os.path.basename(file)
-    save_spec_plot(mel, "world2_4d_mels", name + "linear.png")
+
+    # emo2emo_dict = {}
+    #
+    # for e1 in range(0,4):
+    #
+    #     emo2emo_dict[e1] = {}
+    #
+    #     for e2 in range(0,4):
+    #
+    #         mean_list = []
+    #         std_list = []
+    #
+    #         for s in range(0,10):
+    #             mean_diff = hp.f0_dict[e2][s][0] - hp.f0_dict[e1][s][0]
+    #             std_diff = hp.f0_dict[e2][s][1] - hp.f0_dict[e1][s][1]
+    #             mean_list.append(mean_diff)
+    #             std_list.append(std_diff)
+    #
+    #         mean_mean = np.mean(mean_list)
+    #         std_mean = np.mean(std_list)
+    #         emo2emo_dict[e1][e2] = (mean_mean, std_mean)
+    #
+    # for tag, val in emo2emo_dict.items():
+    #     print(f'Emotion {tag} stats:')
+    #     for tag2, val2 in val.items():
+    #         print(f'{tag2} = {val2[0]}, {val2[1]}')
+    #
+    # with open('f0_relative_dict.pkl', 'wb') as f:
+    #     pickle.dump(emo2emo_dict, f, pickle.HIGHEST_PROTOCOL)
+
+
+    for tag, val in hp.f0_dict.items():
+        print(f'Emotion {tag} stats:')
+        for tag2, val2 in val.items():
+            print(f'{tag2} = {val2[0]}, {val2[1]}')
+
+    for tag, val in hp.f0_relative_dict.items():
+        print(f'Emotion {tag} stats:')
+        for tag2, val2 in val.items():
+            print(f'{tag2} = {val2[0]}, {val2[1]}')

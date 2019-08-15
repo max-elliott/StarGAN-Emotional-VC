@@ -434,7 +434,7 @@ class Discriminator(nn.Module):
         x = self.conv(x)
         # print(x.size())
         x = self.pool(x)
-        x = torch.squeeze(x)
+        # x = torch.squeeze(x)
         x = torch.tanh(x)
         return x
 

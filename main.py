@@ -110,20 +110,20 @@ if __name__ == '__main__':
     num_emos = config['model']['num_classes']
     # files = [f for f in files if os.path.basename(f)[0:6] in sessions]
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
-    # files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] == 8]
+    train_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(0,6)]
 
     print(len(files), " files used.")
-    weight_vector = make_weight_vector(files, config['data']['dataset_dir'])
+    weight_vector = make_weight_vector(train_files, config['data']['dataset_dir'])
     # print(weight_vector)
 
-    files = my_dataset.shuffle(files)
+    train_files = my_dataset.shuffle(train_files)
 
-    train_test_split = config['data']['train_test_split']
-    split_index = int(len(files)*train_test_split)
-    train_files = files[:split_index]
-    test_files = files[split_index:]
+    # train_test_split = config['data']['train_test_split']
+    # split_index = int(len(files)*train_test_split)
+    # train_files = files[:split_index]
+    test_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(6,8)]
 
-    # print(test_files)
+    print(test_files)
 
     print(f"Training samples: {len(train_files)}")
     print(f"Test samples: {len(test_files)}")
