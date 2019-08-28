@@ -110,20 +110,21 @@ if __name__ == '__main__':
     num_emos = config['model']['num_classes']
     # files = [f for f in files if os.path.basename(f)[0:6] in sessions]
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
-    train_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(0,6)]
+    # train_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(0,6)]
 
     print(len(files), " files used.")
-    weight_vector = make_weight_vector(train_files, config['data']['dataset_dir'])
+    weight_vector = make_weight_vector(files, config['data']['dataset_dir'])
     # print(weight_vector)
 
-    train_files = my_dataset.shuffle(train_files)
+    files = my_dataset.shuffle(files)
 
-    # train_test_split = config['data']['train_test_split']
-    # split_index = int(len(files)*train_test_split)
-    # train_files = files[:split_index]
-    test_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(6,8)]
+    train_test_split = config['data']['train_test_split']
+    split_index = int(len(files)*train_test_split)
+    train_files = files[:split_index]
+    test_files = files[split_index:]
+    # test_files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in range(6,8)]
 
-    print(test_files)
+    # print(test_files)
 
     print(f"Training samples: {len(train_files)}")
     print(f"Test samples: {len(test_files)}")
@@ -168,25 +169,25 @@ if __name__ == '__main__':
     # for i, (x,y) in train_loader:
     #
 
-    # TEST MODEL COMPONENTS
-    data_iter = iter(train_loader)
-
-    x, y = next(data_iter)
-
-    x_lens = x[1]
-    x = x[0].unsqueeze(1)
-    # x = x[:,:,0:80]
-    # print(x.size(), y.size())
-
-    targets = s.make_random_labels(num_emos, batch_size)
-    targets_one_hot = F.one_hot(targets, num_classes = num_emos).float()
-
-    print('g_in =', x.size())
-    # out = s.model.G(input, targets)
-    g_out = s.model.G(x, targets_one_hot)
-    print('g_out = ', g_out.size())
-    d_out = s.model.D(g_out, targets_one_hot)
-    print('d_out = ', d_out)
-    # WHY DIFFERNT LENGTH OUTPUT????
-    out = s.model.emo_cls(g_out, x_lens)
-    print('c_out = ',out)
+    # # TEST MODEL COMPONENTS
+    # data_iter = iter(train_loader)
+    #
+    # x, y = next(data_iter)
+    #
+    # x_lens = x[1]
+    # x = x[0].unsqueeze(1)
+    # # x = x[:,:,0:80]
+    # # print(x.size(), y.size())
+    #
+    # targets = s.make_random_labels(num_emos, batch_size)
+    # targets_one_hot = F.one_hot(targets, num_classes = num_emos).float()
+    #
+    # print('g_in =', x.size())
+    # # out = s.model.G(input, targets)
+    # g_out = s.model.G(x, targets_one_hot)
+    # print('g_out = ', g_out.size())
+    # d_out = s.model.D(g_out, targets_one_hot)
+    # print('d_out = ', d_out)
+    # # WHY DIFFERNT LENGTH OUTPUT????
+    # out = s.model.emo_cls(g_out, x_lens)
+    # print('c_out = ',out)

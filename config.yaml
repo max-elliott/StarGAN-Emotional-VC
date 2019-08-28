@@ -1,6 +1,6 @@
 model:
 
-      name: "load_3emo_test"
+      name: "test111"
       num_feats: 36
       batch_size: 4
       use_speaker: False
