@@ -64,10 +64,11 @@ def load_wav(path):
     return wav
 
 def save_wav(wav, path):
-    # print(32767 / max(0.01, np.max(np.abs(wav))))
+    # print(np.max(np.abs(wav)))
+    # print(np.mean(np.abs(wav)))
     # wav *= 32767 / max(0.01, np.max(np.abs(wav)))
 
-    wav *= 64000
+    wav *= 48000
     wav = np.clip(wav, -32767, 32767)
     wavfile.write(path, hp.sr, wav.astype(np.int16))
 
@@ -278,7 +279,7 @@ def save_world_wav(feats, model_name, filename):
     # librosa.display.waveplot(y=wav, sr=hp.sr)
     # print("Sythesized wav.")
     save_wav(wav, path)
-    print("Saved wav.")
+    # print("Saved wav.")
 
 def f0_pitch_conversion(f0, source_labels, target_labels):
     '''
@@ -298,54 +299,96 @@ def f0_pitch_conversion(f0, source_labels, target_labels):
     mean_log_target = hp.f0_dict[trg_emo][src_spk][0]
     std_log_target = hp.f0_dict[trg_emo][src_spk][1]
 
+
+    # ----- Absolute transformation -----
     f0_converted = np.exp((np.ma.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
 
-    # f0_converted = np.exp(np.ma.log(f0)*(hp.f0_relative_dict[src_emo][trg_emo][1]+1) + hp.f0_relative_dict[src_emo][trg_emo][0])
+    # ----- Relative transformation -----
+    # Has power(std,2) as accidently used std not variance when making statistics
+    # f0_converted = np.exp(np.ma.log(f0)*(np.power(hp.f0_relative_dict[src_emo][trg_emo][1], 2)+1) + hp.f0_relative_dict[src_emo][trg_emo][0])
+    # logf0 = np.ma.log(f0)
+    # mean = np.mean(logf0)
+    # var = np.var(logf0)
+    # f0_converted = np.exp((logf0-mean)/var*(hp.f0_relative_dict[src_emo][trg_emo][1]+var) + mean + hp.f0_relative_dict[src_emo][trg_emo][0])
 
     return f0_converted
 
 if __name__ == '__main__':
 
-    # hp.normalise_mels = False
-    # files = librosa.util.find_files("/Users/Max/MScProject/data/samples/originals")
     # file = './samples/f0s/world2_crop_4d_200_200_testSet/Ses01F_impro02_F014_1to0.wav'
-    #
-    # wav = load_wav(file)
-    # spec = wav2melspectrogram(wav)
-    #
+    # file = '../data/audio/Ses01F_impro02_F017.wav' 3
+    # file = '../data/audio/Ses01F_impro04_F028.wav' 4
+    # file = '../data/audio/Ses01F_impro05_F022.wav' #5
+    file = '../data/audio/Ses01F_script01_1_F037.wav' #6
+    file = '../data/audio/Ses01F_script01_1_F042.wav' #7
+
+
+    wav = load_wav(file)
+    spec = wav2melspectrogram(wav)
+
+    spec = spec[:, 16:-16]
+    print("Original size =", spec.shape)
+
+    fig = plt.figure(figsize=(12, 12))
+    ax1 = fig.add_subplot(2, 2, 1)
+
+    plt.subplot(2, 2, 1)
+    librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
+                            hop_length=hp.hop_length)
+                                                    # fmin=None, fmax=4000)
+    # plt.colorbar(format='%+2.0f dB')
+    plt.title('Power Spectrogram Original')
+
+
+    file = './samples/f0s/world3_4d_newloader_cont_080_testSet/Ses01F_script01_1_F042_0to0.wav'
+
+    wav = load_wav(file)
+    spec = wav2melspectrogram(wav)
+
+    print("New size =", spec.shape)
+
+    ax2 = fig.add_subplot(2, 2, 2)
+
+    # plt.subplot(2, 2, 2)
+    librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
+                            hop_length=hp.hop_length)
+                                                    # fmin=None, fmax=4000)
+    # plt.colorbar(format='%+2.0f dB')
+    plt.title('Power Spectrogram Angry')
+
+    file = './samples/f0s/world3_4d_newloader_cont_080_testSet/Ses01F_script01_1_F042_0to1.wav'
+
+    wav = load_wav(file)
+    spec = wav2melspectrogram(wav)
+
     # if hp.normalise_mels:
     #     spec = _unnormalise_mel(spec)
-    #
-    # fig = plt.figure(figsize=(12, 4))
-    # ax1 = fig.add_subplot(1, 2, 1)
-    #
-    # # plt.subplot(1, 2, 1)
-    # librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
-    #                         hop_length=hp.hop_length)
-    #                                                 # fmin=None, fmax=4000)
+
+    ax3 = fig.add_subplot(2, 2, 3, sharey=ax1)
+    librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
+                            hop_length=hp.hop_length)
+                                                    # fmin=None, fmax=4000)
     # plt.colorbar(format='%+2.0f dB')
-    # plt.title('Power spectrogram angry')
-    #
-    # file = './samples/f0s/world2_crop_4d_200_200_testSet/Ses01F_impro02_F014_1to1.wav'
-    #
-    # wav = load_wav(file)
-    # spec = wav2melspectrogram(wav)
-    #
+    plt.title('Power Spectrogram Sad')
+
+    file = './samples/f0s/world3_4d_newloader_cont_080_testSet/Ses01F_script01_1_F042_0to2.wav'
+
+    wav = load_wav(file)
+    spec = wav2melspectrogram(wav)
+
     # if hp.normalise_mels:
     #     spec = _unnormalise_mel(spec)
-    #
-    #
-    # # plt.subplot(1, 2, 2)
-    # ax2 = fig.add_subplot(1, 2, 2, sharey=ax1)
-    # librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
-    #                         hop_length=hp.hop_length)
-    #                                                 # fmin=None, fmax=4000)
+
+    ax4 = fig.add_subplot(2, 2, 4, sharey=ax1)
+    librosa.display.specshow(librosa.power_to_db(spec), y_axis='mel', sr=hp.sr,
+                            hop_length=hp.hop_length)
+                                                    # fmin=None, fmax=4000)
     # plt.colorbar(format='%+2.0f dB')
-    # plt.title('Power spectrogram sad')
+    plt.title('Power Spectrogram Happy')
     #
-    # plt.savefig('../graphs/world2_full_4d/fig.png')
-    # # plt.close(fig)
-    # plt.close("all")
+    plt.savefig('../graphs/specs/3-emo_a-s-h_example7.png')
+    plt.close(fig)
+    plt.close("all")
 
     # name = os.path.basename(file)
     # save_spec_plot(mel, "world2_4d_mels", name + "linear.png")
@@ -377,16 +420,32 @@ if __name__ == '__main__':
     #     for tag2, val2 in val.items():
     #         print(f'{tag2} = {val2[0]}, {val2[1]}')
     #
-    # with open('f0_relative_dict.pkl', 'wb') as f:
+    # with open('f0_relative_dict2.pkl', 'wb') as f:
     #     pickle.dump(emo2emo_dict, f, pickle.HIGHEST_PROTOCOL)
 
 
-    for tag, val in hp.f0_dict.items():
-        print(f'Emotion {tag} stats:')
-        for tag2, val2 in val.items():
-            print(f'{tag2} = {val2[0]}, {val2[1]}')
+    # for tag, val in hp.f0_dict.items():
+    #     print(f'Emotion {tag} stats:')
+    #     for tag2, val2 in val.items():
+    #         print(f'{tag2} = {val2[0]}, {val2[1]}')
+    #
+    # for tag, val in hp.f0_relative_dict.items():
+    #     print(f'Emotion {tag} stats:')
+    #     for tag2, val2 in val.items():
+    #         print(f'{tag2} = {val2[0]}, {val2[1]}')
 
-    for tag, val in hp.f0_relative_dict.items():
-        print(f'Emotion {tag} stats:')
-        for tag2, val2 in val.items():
-            print(f'{tag2} = {val2[0]}, {val2[1]}')
+    # files = librosa.util.find_files("/Users/Max/MScProject/StarGAN-Emotional-VC/samples/DA/all/3-emo-augmented", ext = "wav")
+    # # files = [os.path.basename(f) for f in files]
+    # print(files)
+    # numbers = []
+    # for f in files:
+    #     # numbers.append(f[-5])
+    #     if f[-8] != '3':
+    #         # if f[-5] != '0':
+    #
+    #         name = os.path.basename(f)[:-10] + os.path.basename(f)[-8:]
+    #         numbers.append(name)
+    #         os.rename(f, "/Users/Max/MScProject/StarGAN-Emotional-VC/samples/DA/all/3-emo-augmented/" + name)
+    #         # os.rename(f, "/Users/Max/MScProject/StarGAN-Emotional-VC/samples/DA/all/actual/" + name)
+    #
+    # print(numbers)

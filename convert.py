@@ -100,7 +100,7 @@ if __name__=='__main__':
     parser.add_argument('-in', '--in_dir', type = str)
     parser.add_argument('-out', '--out_dir', type = str)
     parser.add_argument('-i', '--iteration', type = str)
-    # parser.add_argument('-n', '--num_emotions', type = int)
+    # parser.add_argument('-n', '--num_emotions', type = int, default = None)
     # parser.add_argument('-f', '--features'), type = str,
                         # help = "mel or world features.")
 
@@ -176,51 +176,65 @@ if __name__=='__main__':
             with open('./3_emotions_testset.pkl', 'rb') as fp:
                 filenames = pickle.load(fp)
         filenames = [f+".wav" for f in filenames]
+        filenames = [f for f in filenames if pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][0]<num_emos]
         filenames = [f for f in filenames if pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][0]==2]
         print(filenames)
         print("Converting test set.")
     # for one_hot in emo_targets:
     #     _single_conversion(filenames[0], model, one_hot)
 
-    filenames = ['Ses01F_impro02_F014',     #ANRGY
-                'Ses01M_impro01_F007',
-                'Ses01M_impro01_F021',
-                'Ses01M_script03_2_M023',
-                'Ses03F_script01_1_M022',
-                'Ses03F_script02_2_F005',
-                'Ses04F_impro01_M008',
-                'Ses04F_impro08_M023',
-                'Ses04M_script01_1_F022',
-                'Ses05M_script03_2_M032',
-                'Ses02F_script02_2_F020',    #SAD
-                'Ses02M_script01_1_M003',
-                'Ses02M_script02_2_F020',
-                'Ses03F_impro02_F031',
-                'Ses03F_impro06_F015',
-                'Ses03F_script01_3_M032',
-                'Ses03M_impro02_F025',
-                'Ses03M_impro02_F026',
-                'Ses04M_script01_1_M021',
-                'Ses05M_impro06_F009'
-                'Ses01F_script01_3_M019',   #HAPPY
-                'Ses01M_script03_1_F003',
-                'Ses02M_impro07_F024',
-                'Ses03F_impro07_M035',
-                'Ses03M_impro03_F026',
-                'Ses03M_script01_3_F020',
-                'Ses04M_impro03_F024',
-                'Ses04M_script01_3_F013',
-                'Ses05F_impro03_F046',
-                'Ses05M_impro08_F028'
-                ]
-    filenames = [f+".wav" for f in filenames]
+    # filenames = ['Ses01F_impro02_F014',     #ANRGY
+    #             'Ses01M_impro01_F007',
+    #             'Ses01M_impro01_F021',
+    #             'Ses01M_script03_2_M023',
+    #             'Ses03F_script01_1_M022',
+    #             'Ses03F_script02_2_F005',
+    #             'Ses04F_impro01_M008',
+    #             'Ses04F_impro08_M023',
+    #             'Ses04M_script01_1_F022',
+    #             'Ses05M_script03_2_M032',
+    #             'Ses02F_script02_2_F020',    #SAD
+    #             'Ses02M_script01_1_M003',
+    #             'Ses02M_script02_2_F020',
+    #             'Ses03F_impro02_F031',
+    #             'Ses03F_impro06_F015',
+    #             'Ses03F_script01_3_M032',
+    #             'Ses03M_impro02_F025',
+    #             'Ses03M_impro02_F026',
+    #             'Ses04M_script01_1_M021',
+    #             'Ses05M_impro06_F009'
+    #             'Ses01F_script01_3_M019',   #HAPPY
+    #             'Ses01M_script03_1_F003',
+    #             'Ses02M_impro07_F024',
+    #             'Ses03F_impro07_M035',
+    #             'Ses03M_impro03_F026',
+    #             'Ses03M_script01_3_F020',
+    #             'Ses04M_impro03_F024',
+    #             'Ses04M_script01_3_F013',
+    #             'Ses05F_impro03_F046',
+    #             'Ses05M_impro08_F028'
+    #             ]
+    # filenames = [f+".wav" for f in filenames]
+    #
+    # shuffle_dir = "./samples/final/Evaluation/Stage_B/Angrier"
+    # filenames = librosa.util.find_files(shuffle_dir, ext='wav')
+    # filenames = [os.path.basename(f)[:-4] + ".wav" for f in filenames]
+    #
+    # for f in filenames:
+    #     print(f[:-4])
 
-    shuffle_dir = "./samples/final/Evaluation/Stage_B/Angrier"
-    filenames = librosa.util.find_files(shuffle_dir, ext='wav')
-    filenames = [os.path.basename(f)[:-4] + ".wav" for f in filenames]
+    # in_dir = '../data/labels'
+    # files = find_files(in_dir, ext = 'npy')
+    # filenames = [os.path.basename(f)[:-4] + ".wav" for f in files]
+    # print("Found", len(filenames), " files.")
+    #
+    # filenames = [f for f in filenames if pp.get_wav_and_labels(f, config['data']['dataset_dir'])[1][1] in range(0,6)]
+    # random.shuffle(filenames)
+    # filenames = filenames[:10]
+    # print(filenames)
+    # print("Number of files to be converted = ", len(filenames))
 
-    for f in filenames:
-        print(f[:-4])
+    # filenames = [""]
     ########################################
     #       BASELINE SYNTHESIS LOOP        #
     ########################################
@@ -241,61 +255,65 @@ if __name__=='__main__':
     ########################################
     #        WORLD CONVERSION LOOP         #
     ########################################
-    # for f in filenames:
-    #
-    #     wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
-    #     wav = np.array(wav, dtype = np.float64)
-    #     labels = np.array(labels)
-    #     f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
-    #     # coded_sp_temp = np.copy(coded_sp).T
-    #     # print(coded_sp_temp.shape)
-    #     coded_sp = coded_sp.T
-    #     coded_sp = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
-    #
-    #     with torch.no_grad():
-    #         # print(emo_targets)
-    #         for i in range (0, emo_targets.size(0)):
-    #
-    #             f0 = np.copy(f0_real)
-    #             ap = np.copy(ap_real)
-    #             # coded_sp_temp_copy = np.copy(coded_sp_temp)
-    #             # coded_sp = np.copy(coded_sp)
-    #             f0 = audio_utils.f0_pitch_conversion(f0, (labels[0],labels[1]),
-    #                                                      (i, labels[1]))
-    #
-    #             fake = model.G(coded_sp, emo_targets[i].unsqueeze(0))
-    #
-    #             # print(f"Converting {f[0:-4]}.")
-    #             filename_wav =  f[0:-4] + "_2_" + str(int(labels[0].item())) + "to" + \
-    #                         str(i) + ".wav"
-    #
-    #             fake = fake.squeeze()
-    #             print("Sampled size = ",fake.size())
-    #             # f = fake.data()
-    #             converted_sp = fake.cpu().numpy()
-    #             converted_sp = np.array(converted_sp, dtype = np.float64)
-    #
-    #             sample_length = converted_sp.shape[0]
-    #             if sample_length != ap.shape[0]:
-    #                 # coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[0:sample_length, :], dtype = np.float64)
-    #                 ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
-    #                 f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
-    #
-    #             f0 = np.ascontiguousarray(f0[40:-40], dtype = np.float64)
-    #             ap = np.ascontiguousarray(ap[40:-40,:], dtype = np.float64)
-    #             converted_sp = np.ascontiguousarray(converted_sp[40:-40,:], dtype = np.float64)
-    #             # coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[40:-40,:], dtype = np.float64)
-    #
-    #             print("ap shape = ", ap.shape)
-    #             print("f0 shape = ", f0.shape)
-    #             print(converted_sp.shape)
-    #             it = str(args.iteration)[0:3]
-    #             audio_utils.save_world_wav([f0,ap,sp,converted_sp], args.out_dir +"_"+ it+'_evalSet', filename_wav)
-    #     print(f, " converted.")
+    for file_num, f in enumerate(filenames):
+
+        wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
+        wav = np.array(wav, dtype = np.float64)
+        labels = np.array(labels)
+        f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
+        # coded_sp_temp = np.copy(coded_sp).T
+        # print(coded_sp_temp.shape)
+        coded_sp = coded_sp.T
+        coded_sp = torch.Tensor(coded_sp).unsqueeze(0).unsqueeze(0).to(device = device)
+
+        with torch.no_grad():
+            # print(emo_targets)
+            for i in range (0, emo_targets.size(0)):
+
+
+                f0 = np.copy(f0_real)
+                ap = np.copy(ap_real)
+                # coded_sp_temp_copy = np.copy(coded_sp_temp)
+                # coded_sp = np.copy(coded_sp)
+                f0 = audio_utils.f0_pitch_conversion(f0, (labels[0],labels[1]),
+                                                         (i, labels[1]))
+
+                fake = model.G(coded_sp, emo_targets[i].unsqueeze(0))
+
+                # print(f"Converting {f[0:-4]}.")
+                filename_wav =  f[0:-4] + "_2_" + str(int(labels[0].item())) + "to" + \
+                            str(i) + ".wav"
+
+                fake = fake.squeeze()
+                # print("Sampled size = ",fake.size())
+                # f = fake.data()
+                converted_sp = fake.cpu().numpy()
+                converted_sp = np.array(converted_sp, dtype = np.float64)
+
+                sample_length = converted_sp.shape[0]
+                if sample_length != ap.shape[0]:
+                    # coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[0:sample_length, :], dtype = np.float64)
+                    ap = np.ascontiguousarray(ap[0:sample_length, :], dtype = np.float64)
+                    f0 = np.ascontiguousarray(f0[0:sample_length], dtype = np.float64)
+
+                f0 = np.ascontiguousarray(f0[20:-20], dtype = np.float64)
+                ap = np.ascontiguousarray(ap[20:-20,:], dtype = np.float64)
+                converted_sp = np.ascontiguousarray(converted_sp[20:-20,:], dtype = np.float64)
+                # coded_sp_temp_copy = np.ascontiguousarray(coded_sp_temp_copy[40:-40,:], dtype = np.float64)
+
+                # print("ap shape = ", ap.shape)
+                # print("f0 shape = ", f0.shape)
+                print(converted_sp.shape)
+                it = str(args.iteration)[0:3]
+                audio_utils.save_world_wav([f0,ap,sp,converted_sp], args.out_dir +"_"+ it, filename_wav)
+        # print(f, " converted.")
+        if (file_num+1) % 20 == 0:
+            print(file_num+1, " done.")
 
     ########################################
     #         MEL CONVERSION LOOP          #
     ########################################
+    ### NEVER IMPLEMENTED AS ENDED UP NOT USING MEL SPECTROGRAMS
     # Make .npy arrays
     # Make audio
     # Make spec plots

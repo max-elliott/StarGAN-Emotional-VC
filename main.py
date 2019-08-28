@@ -169,24 +169,24 @@ if __name__ == '__main__':
     #
 
     # TEST MODEL COMPONENTS
-    # data_iter = iter(train_loader)
-    #
-    # x, y = next(data_iter)
-    #
-    # x_lens = x[1]
-    # x = x[0].unsqueeze(1)
-    # # x = x[:,:,0:80]
-    # # print(x.size(), y.size())
-    #
-    # targets = s.make_random_labels(num_emos, batch_size)
-    # targets_one_hot = F.one_hot(targets, num_classes = num_emos).float()
-    #
-    # print('g_in =', x.size())
-    # # out = s.model.G(input, targets)
-    # g_out = s.model.G(x, targets_one_hot)
-    # print('g_out = ', g_out.size())
-    # d_out = s.model.D(g_out, targets_one_hot)
-    # print('d_out = ', d_out)
-    # # WHY DIFFERNT LENGTH OUTPUT????
-    # out = s.model.emo_cls(g_out, x_lens)
-    # print('c_out = ',out)
+    data_iter = iter(train_loader)
+
+    x, y = next(data_iter)
+
+    x_lens = x[1]
+    x = x[0].unsqueeze(1)
+    # x = x[:,:,0:80]
+    # print(x.size(), y.size())
+
+    targets = s.make_random_labels(num_emos, batch_size)
+    targets_one_hot = F.one_hot(targets, num_classes = num_emos).float()
+
+    print('g_in =', x.size())
+    # out = s.model.G(input, targets)
+    g_out = s.model.G(x, targets_one_hot)
+    print('g_out = ', g_out.size())
+    d_out = s.model.D(g_out, targets_one_hot)
+    print('d_out = ', d_out)
+    # WHY DIFFERNT LENGTH OUTPUT????
+    out = s.model.emo_cls(g_out, x_lens)
+    print('c_out = ',out)

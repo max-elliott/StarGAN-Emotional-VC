@@ -265,10 +265,10 @@ if __name__=='__main__':
 
     print("Making model")
 
-    # model = nn.DataParallel(classifiers.Emotion_Classifier(input_size, hidden_size,
-    #                  num_layers = num_layers, num_classes = num_emos, bi = True))
-    model = nn.DataParallel(classifiers.Dimension_Classifier(input_size, hidden_size,
-                     num_layers = num_layers, bi = True))
+    model = nn.DataParallel(classifiers.Emotion_Classifier(input_size, hidden_size,
+                     num_layers = num_layers, num_classes = num_emos, bi = True))
+    # model = nn.DataParallel(classifiers.Dimension_Classifier(input_size, hidden_size,
+                     # num_layers = num_layers, bi = True))
     optimiser = optim.Adam(model.parameters(), lr=0.0001, weight_decay = 0.000001)
 
     loss_fn = nn.CrossEntropyLoss(weight = emo_loss_weights)
@@ -280,5 +280,5 @@ if __name__=='__main__':
 
 
     print("Running training")
-    train_model(model, optimiser, train_loader, test_loader, loss_fn, model_type='dim',
+    train_model(model, optimiser, train_loader, test_loader, loss_fn, model_type='cls',
                 epochs = n_epochs, var_len_data = True, start_epoch=epoch)

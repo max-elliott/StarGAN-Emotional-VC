@@ -582,8 +582,8 @@ class Solver(object):
         domain_list = np.arange(0, num_domains)
         # print(domain_list)
         labels = torch.zeros((num_labels))
-        for i in range(0, num_labels):
-            labels[i] = random.choice(domain_list).item()
+        # for i in range(0, num_labels):
+        #     labels[i] = random.choice(domain_list).item()
 
         return labels.long()
 

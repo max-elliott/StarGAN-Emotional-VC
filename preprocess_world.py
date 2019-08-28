@@ -6,7 +6,7 @@ import pyworld
 # import pyworld as pw
 from pyworld import decode_spectral_envelope, synthesize
 import glob
-from utility import *
+# from utility import *
 import argparse
 from datetime import datetime
 import pickle
@@ -19,7 +19,7 @@ FEATURE_DIM = 36
 SAMPLE_RATE = 16000
 FRAMES = 512
 FFTSIZE = 1024
-SPEAKERS_NUM = len(speakers)
+# SPEAKERS_NUM = len(speakers)
 CHUNK_SIZE = 1 # concate CHUNK_SIZE audio clips together
 EPSILON = 1e-10
 MODEL_NAME = 'starganvc_model'
@@ -135,7 +135,8 @@ def cal_mcep(wav, sr=SAMPLE_RATE, dim=FEATURE_DIM, fft_size=FFTSIZE):
 def get_f0_stats(f0s):
     log_f0s_concatenated = np.ma.log(np.concatenate(f0s))
     log_f0s_mean = log_f0s_concatenated.mean()
-    log_f0s_std = log_f0s_concatenated.std()
+    log_f0s_std = np.var(log_f0s_concatenated)
+
 
     return log_f0s_mean, log_f0s_std
 
