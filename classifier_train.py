@@ -225,7 +225,7 @@ if __name__=='__main__':
     random.seed(SEED)
 
     # num_classes = 2
-    n_epochs = 200
+    n_epochs = 100
     hidden_size = 128
     input_size = 36
     num_layers = 2
@@ -239,7 +239,7 @@ if __name__=='__main__':
     num_emos = args.num_emos
     label_dir = os.path.join(config['data']['dataset_dir'], 'labels')
     files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[0] < num_emos]
-    files = files[:100]
+    files = [f for f in files if np.load(label_dir + "/" + f + ".npy")[1] in [9,8,7,6]]
     files = my_dataset.shuffle(files)
 
     train_test_split = config['data']['train_test_split']

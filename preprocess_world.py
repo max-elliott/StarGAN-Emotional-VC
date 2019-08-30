@@ -134,6 +134,10 @@ def cal_mcep(wav, sr=SAMPLE_RATE, dim=FEATURE_DIM, fft_size=FFTSIZE):
 
 def get_f0_stats(f0s):
     log_f0s_concatenated = np.ma.log(np.concatenate(f0s))
+    log_F0s_no0 = []
+    # for v in log_f0s_concatenated:
+    #     if v != 0:
+    #         log_F0s_no0.append(v)
     log_f0s_mean = log_f0s_concatenated.mean()
     log_f0s_std = np.var(log_f0s_concatenated)
 

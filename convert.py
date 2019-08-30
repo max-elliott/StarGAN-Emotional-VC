@@ -234,7 +234,9 @@ if __name__=='__main__':
     # print(filenames)
     # print("Number of files to be converted = ", len(filenames))
 
-    # filenames = [""]
+    filenames = ["../data/stairway.wav"]
+    wav = audio_utils.load_wav(filenames[0])
+    labels = [3, 1, 0,0,0,0,0,0]
     ########################################
     #       BASELINE SYNTHESIS LOOP        #
     ########################################
@@ -257,7 +259,7 @@ if __name__=='__main__':
     ########################################
     for file_num, f in enumerate(filenames):
 
-        wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
+        # wav, labels = pp.get_wav_and_labels(f, config['data']['dataset_dir'])
         wav = np.array(wav, dtype = np.float64)
         labels = np.array(labels)
         f0_real, ap_real, sp, coded_sp = preprocess_world.cal_mcep(wav)
@@ -281,7 +283,9 @@ if __name__=='__main__':
                 fake = model.G(coded_sp, emo_targets[i].unsqueeze(0))
 
                 # print(f"Converting {f[0:-4]}.")
-                filename_wav =  f[0:-4] + "_2_" + str(int(labels[0].item())) + "to" + \
+                # filename_wav =  f[0:-4] + str(int(labels[0].item())) + "to" + \
+                #             str(i) + ".wav"
+                filename_wav = "stairway" + str(int(labels[0].item())) + "to" + \
                             str(i) + ".wav"
 
                 fake = fake.squeeze()
