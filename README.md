@@ -1,6 +1,6 @@
 # StarGAN-Emotional-VC
 
-UPDATE June 2020: This project is completed and the most up-to-date working repository can be found in the GLAM-Imperial group here: https://github.com/glam-imperial/EmotionalConversionStarGAN
+**UPDATE June 2020:** This project is completed and the most up-to-date working repository can be found in the GLAM-Imperial group here: https://github.com/glam-imperial/EmotionalConversionStarGAN
 
 ---
 
